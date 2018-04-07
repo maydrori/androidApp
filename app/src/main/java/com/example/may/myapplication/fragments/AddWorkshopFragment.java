@@ -1,4 +1,4 @@
-package com.example.may.myapplication;
+package com.example.may.myapplication.fragments;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;
@@ -6,20 +6,22 @@ import android.app.DialogFragment;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
+import com.example.may.myapplication.utils.DateFormatter;
 import com.example.may.myapplication.R;
+import com.example.may.myapplication.model.Model;
+import com.example.may.myapplication.model.Workshop;
+import com.example.may.myapplication.utils.UsersManager;
+import com.google.firebase.auth.FirebaseAuth;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
 
 /**
  * Created by May on 4/3/2018.
@@ -28,11 +30,8 @@ import java.util.Locale;
 public class AddWorkshopFragment extends DialogFragment {
 
     Calendar myCalendar = Calendar.getInstance();
-    SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy", Locale.getDefault());
-    SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
     EditText dateInput;
     EditText timeInput;
-//    Dialog dialog;
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -56,21 +55,23 @@ public class AddWorkshopFragment extends DialogFragment {
         initTimePicker();
 
         Button saveButton = (Button) getDialog().findViewById(R.id.btnSave);
-        // if button is clicked, close the custom dialog
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                String date = dateInput.getText().toString();
-                String time = timeInput.getText().toString();
-                Spinner genreSpinner = (Spinner)  getDialog().findViewById(R.id.genreSpinner);
-                String genre = genreSpinner.getSelectedItem().toString();
-                Spinner levelSpinner = (Spinner)  getDialog().findViewById(R.id.levelSpinner);
-                String level = levelSpinner.getSelectedItem().toString();
-                String place = ((EditText)getDialog().findViewById(R.id.place)).getText().toString();
-                int maxParticipants = Integer.parseInt(((EditText)getDialog().findViewById(R.id.maxParticipants)).getText().toString());
+            long date = DateFormatter.fullStringToDate(dateInput.getText().toString() + " " + timeInput.getText().toString()).getTime();
+            Spinner genreSpinner = (Spinner)  getDialog().findViewById(R.id.genreSpinner);
+            String genre = genreSpinner.getSelectedItem().toString();
+            Spinner levelSpinner = (Spinner)  getDialog().findViewById(R.id.levelSpinner);
+            String level = levelSpinner.getSelectedItem().toString();
+            String place = ((EditText)getDialog().findViewById(R.id.place)).getText().toString();
+            int maxParticipants = Integer.parseInt(((EditText)getDialog().findViewById(R.id.maxParticipants)).getText().toString());
 
-                getDialog().dismiss();
+            Model.instance().addWorkshop(new Workshop(date, UsersManager.instance().getCurrentUser().getId(), place, genre, level, maxParticipants));
+
+            Toast.makeText(getActivity().getApplicationContext(), "הסדנא נוספה בהצלחה", Toast.LENGTH_SHORT).show();
+
+            getDialog().dismiss();
             }
         });
     }
@@ -107,7 +108,7 @@ public class AddWorkshopFragment extends DialogFragment {
             @Override
             public void onDateSet(DatePicker view, int year, int monthOfYear,
                                   int dayOfMonth) {
-                dateInput.setText(dateFormat.format(new Date(year, monthOfYear, dayOfMonth)));
+                dateInput.setText(DateFormatter.toDateFormat(year, monthOfYear, dayOfMonth));
             }
         };
 
@@ -136,32 +137,6 @@ public class AddWorkshopFragment extends DialogFragment {
 
         // Apply the adapter to the spinner
         spinner.setAdapter(adapter);
-
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view,
-                                       int position, long id) {
-                // TODO Auto-generated method stub
-
-//                if(spinner.getSelectedItem() == "This is Hint Text")
-//                {
-//
-//                    //Do nothing.
-//                }
-//                else{
-//
-//                    Toast.makeText(MainActivity.this, spinner.getSelectedItem().toString(), Toast.LENGTH_LONG).show();
-//
-//                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // TODO Auto-generated method stub
-
-            }
-        });
 
     }
 }

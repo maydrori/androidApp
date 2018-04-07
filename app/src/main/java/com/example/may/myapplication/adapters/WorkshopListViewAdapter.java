@@ -1,4 +1,4 @@
-package com.example.may.myapplication;
+package com.example.may.myapplication.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -7,8 +7,11 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import com.example.may.myapplication.model.Member;
+import com.example.may.myapplication.R;
+import com.example.may.myapplication.model.Model;
+import com.example.may.myapplication.model.User;
 import com.example.may.myapplication.model.Workshop;
+import com.example.may.myapplication.model.firebase.ModelFirebase;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -46,18 +49,20 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
             TextView placeTextView = (TextView) view.findViewById(R.id.place);
 
             hourTextView.setText(dateFormatForHour.format(workshop.getDate()));
-            teacherTextView.setText(getTeacherName(workshop.getTeacherId()));
             placeTextView.setText(workshop.getPlace());
+
+            setTeacherName(workshop.getTeacherId(), view);
         }
 
         return view;
     }
 
-    private String getTeacherName(String id) {
-        for (Member member : Member.members) {
-            if (member.getId().equals(id)) return member.getName();
-        }
-
-        return "";
+    private void setTeacherName(String id, final View view) {
+        Model.instance().getUserById(id, new ModelFirebase.GetDataListener<User>() {
+            @Override
+            public void onComplete(User user) {
+                ((TextView) view.findViewById(R.id.teacher)).setText(user.getName());
+            }
+        });
     }
 }

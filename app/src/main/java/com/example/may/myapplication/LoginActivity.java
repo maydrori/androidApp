@@ -1,11 +1,26 @@
 package com.example.may.myapplication;
 
+import android.app.FragmentTransaction;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
+
+import com.example.may.myapplication.fragments.LoginFragment;
+import com.example.may.myapplication.fragments.ProfileFragment;
+import com.example.may.myapplication.fragments.WorkshopsCalendarFragment;
+import com.example.may.myapplication.model.Model;
+import com.example.may.myapplication.model.User;
+import com.example.may.myapplication.model.firebase.ModelFirebase;
+import com.example.may.myapplication.utils.UsersManager;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 /**
  * Created by May on 4/3/2018.
@@ -13,38 +28,24 @@ import android.widget.EditText;
 
 public class LoginActivity extends AppCompatActivity {
 
-    SharedPreferences sp;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
-        sp = getSharedPreferences("login",MODE_PRIVATE);
-
-        // If the user already logged in to the app, go straight to the main activity
-        if(sp.getBoolean("logged",false)){
-            goToMainActivity();
-        }
-
-        findViewById(R.id.btn_login).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                // Save the user id in order to use it later
-                EditText userIdInput = findViewById(R.id.text_user_id);
-                int userId = Integer.valueOf(userIdInput.getText().toString());
-
-                sp.edit().putBoolean("logged",true).apply();
-                sp.edit().putInt("id", userId);
-
-                goToMainActivity();
-            }
-        });
     }
 
-    private void goToMainActivity(){
-        Intent i = new Intent(this, MainActivity.class);
-        startActivity(i);
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        initLoginFragment();
+    }
+
+    private void initLoginFragment() {
+        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+
+        LoginFragment fragment = new LoginFragment();
+        fragmentTransaction.add(R.id.content, fragment).addToBackStack(null);
+        fragmentTransaction.commit();
     }
 }
