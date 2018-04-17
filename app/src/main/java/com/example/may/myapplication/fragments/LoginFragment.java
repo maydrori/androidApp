@@ -1,11 +1,11 @@
 package com.example.may.myapplication.fragments;
 
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,10 +14,8 @@ import android.widget.Toast;
 
 import com.example.may.myapplication.MainActivity;
 import com.example.may.myapplication.R;
-import com.example.may.myapplication.model.Model;
-import com.example.may.myapplication.model.User;
-import com.example.may.myapplication.model.firebase.ModelFirebase;
-import com.example.may.myapplication.utils.UsersManager;
+import com.example.may.myapplication.dal.Model;
+import com.example.may.myapplication.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -44,16 +42,9 @@ public class LoginFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         mAuth = FirebaseAuth.getInstance();
-
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            UsersManager.instance().setCurrentUser(new ModelFirebase.GetDataListener<User>() {
-                @Override
-                public void onComplete(User data) {
-                    goToMainActivity();
-                }
-            });
-        }
+
+        if (currentUser != null) goToMainActivity();
         else handleLoginButton();
     }
 
@@ -78,9 +69,8 @@ public class LoginFragment extends Fragment {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             FirebaseUser user = mAuth.getCurrentUser();
-                            User newUser = new User(user.getUid());
-                            Model.instance().addUser(newUser);
-                            initProfileFragment(newUser);
+                            Model.instance().saveUser(new User(user.getUid()));
+                            initProfileFragment(user.getUid());
                         } else {
                             Toast.makeText(getActivity(), "FirebaseAuthentication failed.", Toast.LENGTH_SHORT).show();
                         }
@@ -90,10 +80,10 @@ public class LoginFragment extends Fragment {
         });
     }
 
-    private void initProfileFragment(User newUser) {
+    private void initProfileFragment(String newUserId) {
         FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 
-        ProfileFragment fragment = ProfileFragment.instance(newUser);
+        UserProfileFragment fragment = UserProfileFragment.instance(newUserId);
         fragmentTransaction.replace(R.id.content, fragment).addToBackStack(null);
         fragmentTransaction.commit();
     }

@@ -1,6 +1,7 @@
-package com.example.may.myapplication.model.firebase;
+package com.example.may.myapplication.dal.firebase;
 
-import com.example.may.myapplication.model.Workshop;
+import com.example.may.myapplication.models.User;
+import com.example.may.myapplication.models.Workshop;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -27,6 +28,26 @@ public class WorkshopsFirebase {
 
     public void addWorkshop(Workshop w) {
         ref.child(w.getId()).setValue(w);
+    }
+
+    public void deleteWorkshop(String workshopId) { ref.child(workshopId).removeValue(); }
+
+    public void getWorkshopById(String workshopId, final ModelFirebase.GetDataListener listener) {
+
+        // Getting updates
+        ref.child(workshopId).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                Workshop workshop = dataSnapshot.getValue(Workshop.class);
+                listener.onComplete(workshop);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     public void getAllWorkshops(final ModelFirebase.GetDataListener listener) {

@@ -1,28 +1,29 @@
 package com.example.may.myapplication;
 
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.TextView;
 
-import com.example.may.myapplication.fragments.ProfileFragment;
+import com.example.may.myapplication.fragments.UserProfileFragment;
 import com.example.may.myapplication.fragments.WorkshopsCalendarFragment;
-import com.example.may.myapplication.model.Model;
-import com.example.may.myapplication.model.User;
-import com.example.may.myapplication.model.firebase.ModelFirebase;
-import com.example.may.myapplication.utils.UsersManager;
+import com.example.may.myapplication.models.User;
+import com.example.may.myapplication.repositories.UserRepository;
+import com.example.may.myapplication.viewModels.UserViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity  {
 
+    private UserViewModel userViewModel;
     DrawerLayout mDrawerLayout;
 
     private void initViews() {
@@ -48,24 +49,31 @@ public class MainActivity extends AppCompatActivity  {
     private void setUpNavigationView() {
 
         NavigationView navigationView = findViewById(R.id.nav_view);
+        final TextView navUsername = (TextView) navigationView.getHeaderView(0).findViewById(R.id.text_username);
         navigationView.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {
                     @Override
                     public boolean onNavigationItemSelected(MenuItem menuItem) {
-                        // set item as selected to persist highlight
-                        menuItem.setChecked(true);
-                        // close drawer when item is tapped
-                        mDrawerLayout.closeDrawers();
+            // set item as selected to persist highlight
+            menuItem.setChecked(true);
+            // close drawer when item is tapped
+            mDrawerLayout.closeDrawers();
 
-                        switchTab(menuItem.getItemId());
+            switchTab(menuItem.getItemId());
 
-                        return true;
-                    }
-                });
+            return true;
+             }
+        });
 
-        View headerView = navigationView.getHeaderView(0);
-        TextView navUsername = (TextView) headerView.findViewById(R.id.text_username);
-        navUsername.setText(UsersManager.instance().getCurrentUser().getName());
+        userViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
+        userViewModel.init(UserRepository.getCurrentUserId());
+
+        userViewModel.getUser().observe(this, new Observer<User>() {
+            @Override
+            public void onChanged(@Nullable User user) {
+                navUsername.setText(user.getName());
+            }
+        });
     }
 
     @Override
@@ -80,17 +88,17 @@ public class MainActivity extends AppCompatActivity  {
 
     private void switchTab (int menuItemId) {
         Fragment fragment;
-        FragmentManager fragmentManager = getFragmentManager(); // For AppCompat use getSupportFragmentManager
+        FragmentManager fragmentManager = getSupportFragmentManager();
         switch(menuItemId) {
             default:
             case R.id.nav_home:
                 fragment = new WorkshopsCalendarFragment();
                 break;
             case R.id.nav_profile:
-                fragment = ProfileFragment.instance(UsersManager.instance().getCurrentUser());
+                fragment = UserProfileFragment.instance(FirebaseAuth.getInstance().getCurrentUser().getUid());
                 break;
         }
-        
+
         fragmentManager.beginTransaction()
                 .replace(R.id.content_frame, fragment)
                 .addToBackStack(null)

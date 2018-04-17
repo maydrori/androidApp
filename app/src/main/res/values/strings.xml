@@ -16,6 +16,8 @@
     <string name="phone">טלפון</string>
     <string name="instegramLink">קישור לאינסטגרם</string>
     <string name="facebookLink">קישור לפייסבוק</string>
+    <string name="edit">ערוך</string>
+    <string name="participantsList">רשימת משתתפים</string>
     <string-array name="class_levels">
         <item>רמת קושי</item>
         <item>מתחילים</item>
@@ -45,5 +47,6 @@
     <string name="permission_rationale">"Contacts permissions are needed for providing email
         completions."
     </string>
+    <string name="default_notification_channel_id" translatable="false">fcm_default_channel</string>
 
 </resources>

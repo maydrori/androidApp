@@ -1,4 +1,4 @@
-package com.example.may.myapplication.model;
+package com.example.may.myapplication.models;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -18,8 +18,8 @@ public class Workshop implements Serializable {
     private String level;
     private int maxParticipants;
 
-    public Workshop(long date, String teacherId, String place, String genre, String level, int maxParticipants) {
-        this.id = Model.instance().getNextWorkshopId();
+    public Workshop(String id, long date, String teacherId, String place, String genre, String level, int maxParticipants) {
+        this.id = id;
         this.date = date;
         this.teacherId = teacherId;
         this.place = place;

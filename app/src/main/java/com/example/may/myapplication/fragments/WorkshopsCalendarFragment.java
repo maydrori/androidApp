@@ -1,11 +1,13 @@
 package com.example.may.myapplication.fragments;
 
-import android.app.Fragment;
-import android.app.FragmentManager;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,10 +19,9 @@ import android.widget.Toast;
 import com.example.may.myapplication.R;
 import com.example.may.myapplication.ViewWorkshop;
 import com.example.may.myapplication.adapters.WorkshopListViewAdapter;
-import com.example.may.myapplication.model.Model;
-import com.example.may.myapplication.model.Workshop;
-import com.example.may.myapplication.model.firebase.ModelFirebase;
+import com.example.may.myapplication.models.Workshop;
 import com.example.may.myapplication.utils.DateFormatter;
+import com.example.may.myapplication.viewModels.CalendarViewModel;
 import com.github.sundeepk.compactcalendarview.CompactCalendarView;
 import com.github.sundeepk.compactcalendarview.domain.Event;
 
@@ -38,6 +39,24 @@ public class WorkshopsCalendarFragment extends Fragment {
     CompactCalendarView compactCalendar;
     TextView calanderDateTextView;
     List<Workshop> currentWorkshop;
+    Date currentDate = new Date();
+
+    CalendarViewModel viewModel;
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        viewModel = ViewModelProviders.of(this).get(CalendarViewModel.class);
+        viewModel.init();
+
+        viewModel.getWorkshops().observe(this, new Observer<List<Workshop>>() {
+            @Override
+            public void onChanged(@Nullable List<Workshop> workshops) {
+                loadEventsToCalendar(workshops);
+            }
+        });
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -52,15 +71,20 @@ public class WorkshopsCalendarFragment extends Fragment {
 
         initViews();
         registerEvents();
-        loadEvents();
     }
 
-    private void setWorkshopsList(List<Event> workshopsByDate) {
+    private void refreshWorkshopsList() {
+
+        List<Event> events = compactCalendar.getEvents(currentDate);
+
+        if (events.size() == 0) {
+            Toast.makeText(getActivity().getApplicationContext(), "No Events Planned for that day", Toast.LENGTH_SHORT).show();
+        }
 
         // TODO: sort them by hour
         currentWorkshop = new ArrayList<Workshop>();
-        for (Event event : workshopsByDate) {
-            currentWorkshop.add((Workshop)event.getData());
+        for (Event event : events) {
+            currentWorkshop.add((Workshop) event.getData());
         }
 
         WorkshopListViewAdapter workshopsAdapter = new WorkshopListViewAdapter(getActivity(), R.layout.listview_workshops, currentWorkshop);
@@ -68,19 +92,16 @@ public class WorkshopsCalendarFragment extends Fragment {
         listViewWorkshops.setAdapter(workshopsAdapter);
     }
 
-    private void loadEvents() {
+    private void loadEventsToCalendar(List<Workshop> workshops) {
 
-        Model.instance().getAllWorkshops(new ModelFirebase.GetDataListener<List<Workshop>>() {
-            @Override
-            public void onComplete(List<Workshop> workshops) {
+        compactCalendar.removeAllEvents();
+        List<Event> events = new ArrayList<Event>();
+        for (Workshop workshop : workshops) {
+            events.add(new Event(Color.BLUE, workshop.getDate(), workshop));
+        }
+        compactCalendar.addEvents(events);
 
-            List<Event> events = new ArrayList<Event>();
-            for (Workshop workshop : workshops) {
-                events.add(new Event(Color.BLUE, workshop.getDate(), workshop));
-            }
-            compactCalendar.addEvents(events);
-            }
-        });
+        refreshWorkshopsList();
     }
 
     private void initViews() {
@@ -100,17 +121,16 @@ public class WorkshopsCalendarFragment extends Fragment {
         compactCalendar.setListener(new CompactCalendarView.CompactCalendarViewListener() {
             @Override
             public void onDayClick(Date dateClicked) {
-                List<Event> workshopsByDate = compactCalendar.getEvents(dateClicked);
-                setWorkshopsList(workshopsByDate);
-
-                if (workshopsByDate.size() == 0) {
-                    Toast.makeText(getActivity().getApplicationContext(), "No Events Planned for that day", Toast.LENGTH_SHORT).show();
-                }
+                currentDate = dateClicked;
+                refreshWorkshopsList();
             }
 
             @Override
             public void onMonthScroll(Date firstDayOfNewMonth) {
+                currentDate = firstDayOfNewMonth;
                 calanderDateTextView.setText(DateFormatter.toMonthFormat(firstDayOfNewMonth));
+
+                refreshWorkshopsList();
             }
         });
 
@@ -121,7 +141,7 @@ public class WorkshopsCalendarFragment extends Fragment {
                 Workshop workshop = currentWorkshop.get(position);
 
                 Intent intent = new Intent(view.getContext(), ViewWorkshop.class)
-                        .putExtra("workshop", workshop);
+                        .putExtra("workshopId", workshop.getId());
                 startActivity(intent);
             }
         });

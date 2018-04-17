@@ -1,8 +1,6 @@
-package com.example.may.myapplication.model;
+package com.example.may.myapplication.models;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by May on 4/3/2018.
@@ -15,12 +13,20 @@ public class User implements Serializable {
     private String instegramLink;
     private String facebookLink;
     private String phone;
-//    private ? image;
+    private String imageUrl;
 
     public User() {}
 
     public User(String id) {
         this.id = id;
+    }
+
+    public User(String id, String name, String phone, String instegramLink, String facebookLink) {
+        this.id = id;
+        this.name = name;
+        this.phone = phone;
+        this.instegramLink = instegramLink;
+        this.facebookLink = facebookLink;
     }
 
     public String getId() {
@@ -38,24 +44,12 @@ public class User implements Serializable {
     public String getPhone() {
         return phone;
     }
-
-    public User setName(String name) {
-        this.name = name;
-        return this;
+    public String getImageUrl() {
+        return imageUrl;
     }
 
-    public User setInstegramLink(String instegramLink) {
-        this.instegramLink = instegramLink;
-        return this;
-    }
-
-    public User setFacebookLink(String facebookLink) {
-        this.facebookLink = facebookLink;
-        return this;
-    }
-
-    public User setPhone(String phone) {
-        this.phone = phone;
+    public User setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
         return this;
     }
 }

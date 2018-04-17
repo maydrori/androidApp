@@ -1,10 +1,15 @@
-package com.example.may.myapplication.model.firebase;
+package com.example.may.myapplication.dal.firebase;
 
+import com.example.may.myapplication.models.WorkshopMembers;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,18 +43,25 @@ public class WorkshopsMembersFirebase {
         ref.child(workshopId).child("waitingList").child(userId).removeValue();
     }
 
-    public void getWorkshopMembers(String workshopId, final ModelFirebase.GetDataListener listener) {
+    public void getWorkshopMembers(final String workshopId, final ModelFirebase.GetDataListener listener) {
         ref.child(workshopId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
-                Map<String, List<String>> workshopMembers = new HashMap<>();
-                for (DataSnapshot elem: dataSnapshot.getChildren()) {
+                List<String> registered = new ArrayList<>();
+                List<String> waitingList = new ArrayList<>();
 
-                    List<String> users = convertToList(elem.getChildren());
-                    workshopMembers.put(elem.getKey(), users);
+                Map value = (Map) dataSnapshot.getValue();
+
+                if (value != null) {
+                    Map registeredMap = (Map) value.get("registered");
+                    Map waitingListMap = (Map) value.get("waitingList");
+
+                    if (registeredMap != null) registered = new ArrayList<>(registeredMap.values());
+                    if (waitingListMap != null)waitingList = new ArrayList<>(waitingListMap.values());
                 }
-                listener.onComplete(workshopMembers);
+
+                listener.onComplete(new WorkshopMembers(registered, waitingList));
             }
 
             @Override
@@ -59,12 +71,7 @@ public class WorkshopsMembersFirebase {
         });
     }
 
-    private <T> List<T> convertToList(Iterable<DataSnapshot> data) {
-        List<T> lst = new ArrayList<>();
-        for (DataSnapshot curr : data) {
-            lst.add((T)curr.getValue());
-        }
-
-        return lst;
+    public void deleteWorkshop(String workshopId) {
+        ref.child(workshopId).removeValue();
     }
 }

@@ -1,6 +1,6 @@
-package com.example.may.myapplication.model.firebase;
+package com.example.may.myapplication.dal.firebase;
 
-import com.example.may.myapplication.model.User;
+import com.example.may.myapplication.models.User;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -17,7 +17,7 @@ public class UsersFirebase {
         this.ref = ref;
     }
 
-    public void addUser(User u) {
+    public void saveUser(User u) {
         ref.child(u.getId()).setValue(u);
     }
 
@@ -36,9 +36,5 @@ public class UsersFirebase {
 
             }
         }));
-    }
-
-    public void updateUser(User u) {
-        ref.child(u.getId()).setValue(u);
     }
 }

@@ -2,9 +2,9 @@ package com.example.may.myapplication.fragments;
 
 import android.app.DatePickerDialog;
 import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
+import android.support.v4.app.DialogFragment;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -14,12 +14,11 @@ import android.widget.Spinner;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
-import com.example.may.myapplication.utils.DateFormatter;
 import com.example.may.myapplication.R;
-import com.example.may.myapplication.model.Model;
-import com.example.may.myapplication.model.Workshop;
-import com.example.may.myapplication.utils.UsersManager;
-import com.google.firebase.auth.FirebaseAuth;
+import com.example.may.myapplication.dal.Model;
+import com.example.may.myapplication.models.Workshop;
+import com.example.may.myapplication.repositories.UserRepository;
+import com.example.may.myapplication.utils.DateFormatter;
 
 import java.util.Calendar;
 
@@ -29,9 +28,14 @@ import java.util.Calendar;
 
 public class AddWorkshopFragment extends DialogFragment {
 
+    Workshop workshop;
     Calendar myCalendar = Calendar.getInstance();
+    EditText placeInput;
+    EditText maxParticipantsInput;
     EditText dateInput;
     EditText timeInput;
+    Spinner genreInput;
+    Spinner levelInput;
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -44,15 +48,13 @@ public class AddWorkshopFragment extends DialogFragment {
     @Override
     public void onStart() {
         super.onStart();
+
+        workshop = (getArguments() != null) ? (Workshop)getArguments().getSerializable("workshop") : null;
+
         initDialogInputs();
     }
 
-    private void initDialogInputs() {
-        initSpinner(R.id.genreSpinner, R.array.class_genres);
-        initSpinner(R.id.levelSpinner, R.array.class_levels);
-
-        initDatePicker();
-        initTimePicker();
+    private void handleSave() {
 
         Button saveButton = (Button) getDialog().findViewById(R.id.btnSave);
         saveButton.setOnClickListener(new View.OnClickListener() {
@@ -64,21 +66,50 @@ public class AddWorkshopFragment extends DialogFragment {
             String genre = genreSpinner.getSelectedItem().toString();
             Spinner levelSpinner = (Spinner)  getDialog().findViewById(R.id.levelSpinner);
             String level = levelSpinner.getSelectedItem().toString();
-            String place = ((EditText)getDialog().findViewById(R.id.place)).getText().toString();
-            int maxParticipants = Integer.parseInt(((EditText)getDialog().findViewById(R.id.maxParticipants)).getText().toString());
+            String place = placeInput.getText().toString();
+            int maxParticipants = Integer.parseInt(maxParticipantsInput.getText().toString());
 
-            Model.instance().addWorkshop(new Workshop(date, UsersManager.instance().getCurrentUser().getId(), place, genre, level, maxParticipants));
+            String workshopId = (workshop != null) ? workshop.getId() : Model.instance().getNextWorkshopId();
+            Workshop workshopToSave = new Workshop(workshopId, date, UserRepository.getCurrentUserId(), place, genre, level, maxParticipants);
+            Model.instance().saveWorkshop(workshopToSave);
 
-            Toast.makeText(getActivity().getApplicationContext(), "הסדנא נוספה בהצלחה", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity().getApplicationContext(), "הסדנא נשמרה בהצלחה", Toast.LENGTH_SHORT).show();
 
             getDialog().dismiss();
             }
         });
     }
 
+    private void setInputsByWorkshop() {
+        placeInput.setText(workshop.getPlace());
+        maxParticipantsInput.setText(String.valueOf(workshop.getMaxParticipants()));
+        dateInput.setText(DateFormatter.toDateFormat(workshop.getDate()));
+        timeInput.setText(DateFormatter.toTimeFormat(workshop.getDate()));
+        genreInput.setSelection(((ArrayAdapter<CharSequence>)genreInput.getAdapter()).getPosition(workshop.getGenre()));
+        levelInput.setSelection(((ArrayAdapter<CharSequence>)levelInput.getAdapter()).getPosition(workshop.getLevel()));
+    }
+
+    private void initDialogInputs() {
+
+        placeInput = ((EditText)getDialog().findViewById(R.id.place));
+        maxParticipantsInput = (EditText)getDialog().findViewById(R.id.maxParticipants);
+        dateInput = (EditText)getDialog().findViewById(R.id.date);
+        timeInput = (EditText)getDialog().findViewById(R.id.time);
+        genreInput = (Spinner) getDialog().findViewById(R.id.genreSpinner);
+        levelInput = (Spinner) getDialog().findViewById(R.id.levelSpinner);
+
+        initSpinner(genreInput, R.array.class_genres);
+        initSpinner(levelInput, R.array.class_levels);
+        initDatePicker();
+        initTimePicker();
+
+        if (workshop != null) setInputsByWorkshop();
+
+        handleSave();
+    }
+
     private void initTimePicker() {
 
-        timeInput = (EditText)  getDialog().findViewById(R.id.time);
         final TimePickerDialog.OnTimeSetListener time = new TimePickerDialog.OnTimeSetListener() {
 
             @Override
@@ -102,7 +133,6 @@ public class AddWorkshopFragment extends DialogFragment {
 
     private void initDatePicker() {
 
-        dateInput = (EditText) getDialog().findViewById(R.id.date);
         final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
 
             @Override
@@ -125,9 +155,7 @@ public class AddWorkshopFragment extends DialogFragment {
         });
     }
 
-    private void initSpinner(int spinnerId, int items) {
-        Spinner spinner = (Spinner) getDialog().findViewById(spinnerId);
-
+    private void initSpinner(Spinner spinner, int items) {
         // Create an ArrayAdapter using the string array and a default spinner layout
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getActivity(),
                 items, android.R.layout.simple_spinner_item);
@@ -137,6 +165,5 @@ public class AddWorkshopFragment extends DialogFragment {
 
         // Apply the adapter to the spinner
         spinner.setAdapter(adapter);
-
     }
 }

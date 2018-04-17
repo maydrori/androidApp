@@ -8,10 +8,10 @@ import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import com.example.may.myapplication.R;
-import com.example.may.myapplication.model.Model;
-import com.example.may.myapplication.model.User;
-import com.example.may.myapplication.model.Workshop;
-import com.example.may.myapplication.model.firebase.ModelFirebase;
+import com.example.may.myapplication.dal.Model;
+import com.example.may.myapplication.models.User;
+import com.example.may.myapplication.models.Workshop;
+import com.example.may.myapplication.dal.firebase.ModelFirebase;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -33,6 +33,9 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+
+        // TODO: here we need to get the images... save locally
+        // Try to find good library that do this auto!!!
 
         View view = convertView;
 
