@@ -16,7 +16,7 @@
         android:background="@drawable/list_divider"
         android:cropToPadding="false"
         android:fadeScrollbars="false"
-        android:src="@drawable/may_pic"
+        android:src="@drawable/ic_person"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 

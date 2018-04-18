@@ -21,7 +21,7 @@ public class WorkshopMembersViewModel extends ViewModel{
             // we know the userId won't change
             return;
         }
-        workshopMembers = WorkshopsRepository.getWorkshopMembers(workshopId);
+        workshopMembers = WorkshopsRepository.instance.getWorkshopMembers(workshopId);
 
     }
 

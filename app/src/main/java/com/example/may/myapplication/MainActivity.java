@@ -2,6 +2,7 @@ package com.example.may.myapplication;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.media.Image;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
@@ -12,12 +13,14 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.may.myapplication.fragments.UserProfileFragment;
 import com.example.may.myapplication.fragments.WorkshopsCalendarFragment;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.repositories.UserRepository;
+import com.example.may.myapplication.utils.ImageHelper;
 import com.example.may.myapplication.viewModels.UserViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -49,7 +52,9 @@ public class MainActivity extends AppCompatActivity  {
     private void setUpNavigationView() {
 
         NavigationView navigationView = findViewById(R.id.nav_view);
-        final TextView navUsername = (TextView) navigationView.getHeaderView(0).findViewById(R.id.text_username);
+        final TextView navUserName = navigationView.getHeaderView(0).findViewById(R.id.text_username);
+        final ImageView navUserImage = navigationView.getHeaderView(0).findViewById(R.id.image_user);
+
         navigationView.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {
                     @Override
@@ -71,7 +76,8 @@ public class MainActivity extends AppCompatActivity  {
         userViewModel.getUser().observe(this, new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
-                navUsername.setText(user.getName());
+                navUserName.setText(user.getName());
+                ImageHelper.loadImageToView(user.getImageUrl(), user.getId(), navUserImage);
             }
         });
     }

@@ -8,6 +8,7 @@ import java.util.List;
 
 public class WorkshopMembers {
 
+    String workshopId;
     List<String> registered;
     List<String> waitingList;
 

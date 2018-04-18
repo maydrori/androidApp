@@ -8,6 +8,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -26,7 +27,8 @@ public class WorkshopsFirebase {
         return ref.push().getKey();
     }
 
-    public void addWorkshop(Workshop w) {
+    public void saveWorkshop(Workshop w) {
+        w.setLastUpdated(new Date().getTime());
         ref.child(w.getId()).setValue(w);
     }
 

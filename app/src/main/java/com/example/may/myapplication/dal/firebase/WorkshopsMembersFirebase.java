@@ -1,17 +1,13 @@
 package com.example.may.myapplication.dal.firebase;
 
 import com.example.may.myapplication.models.WorkshopMembers;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,12 +27,41 @@ public class WorkshopsMembersFirebase {
         ref.child(workshopId).child("registered").child(userId).setValue(userId);
     }
 
-    public void unregisterMemberFromWorkshop(String workshopId, String userId) {
+    public void unregisterMemberFromWorkshop(final String workshopId, String userId) {
         ref.child(workshopId).child("registered").child(userId).removeValue();
     }
 
-    public void enterWaitingList(String workshopId, String userId) {
+    public interface LeaveWaitingListListener {
+        public void onLeave();
+    }
+
+    public void enterWaitingList(final String workshopId, final String userId, final LeaveWaitingListListener listener) {
         ref.child(workshopId).child("waitingList").child(userId).setValue(userId);
+
+        ref.child(workshopId).child("registered").addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                registerMemberToWorkshop(workshopId, userId);
+                listener.onLeave();
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+
     }
 
     public void leaveWaitingList(String workshopId, String userId) {
@@ -44,6 +69,7 @@ public class WorkshopsMembersFirebase {
     }
 
     public void getWorkshopMembers(final String workshopId, final ModelFirebase.GetDataListener listener) {
+
         ref.child(workshopId).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

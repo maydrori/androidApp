@@ -1,10 +1,12 @@
 package com.example.may.myapplication.adapters;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.may.myapplication.R;
@@ -12,6 +14,7 @@ import com.example.may.myapplication.dal.Model;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
 import com.example.may.myapplication.dal.firebase.ModelFirebase;
+import com.example.may.myapplication.utils.ImageHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -54,17 +57,21 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
             hourTextView.setText(dateFormatForHour.format(workshop.getDate()));
             placeTextView.setText(workshop.getPlace());
 
-            setTeacherName(workshop.getTeacherId(), view);
+            setTeacherInfo(workshop.getTeacherId(), view);
         }
 
         return view;
     }
 
-    private void setTeacherName(String id, final View view) {
+    private void setTeacherInfo(String id, final View view) {
         Model.instance().getUserById(id, new ModelFirebase.GetDataListener<User>() {
             @Override
-            public void onComplete(User user) {
+            public void onComplete(final User user) {
                 ((TextView) view.findViewById(R.id.teacher)).setText(user.getName());
+
+                final ImageView teacherPhoto = view.findViewById(R.id.teacher_pic);
+
+                ImageHelper.loadImageToView(user.getImageUrl(), user.getId(), teacherPhoto);
             }
         });
     }

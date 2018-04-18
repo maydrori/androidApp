@@ -21,6 +21,10 @@ import java.io.ByteArrayOutputStream;
 
 public class ModelFirebase {
 
+    private static ModelFirebase instance = new ModelFirebase();
+
+    public static ModelFirebase getInstance() {return instance;}
+
     public WorkshopsFirebase workshops;
     public WorkshopsMembersFirebase workshopsMembers;
     public UsersFirebase users;

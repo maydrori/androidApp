@@ -2,6 +2,7 @@ package com.example.may.myapplication;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -18,13 +19,14 @@ import android.widget.TextView;
 
 import com.example.may.myapplication.dal.Model;
 import com.example.may.myapplication.dal.firebase.ModelFirebase;
+import com.example.may.myapplication.dal.firebase.WorkshopsMembersFirebase;
 import com.example.may.myapplication.fragments.AddWorkshopFragment;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
 import com.example.may.myapplication.models.WorkshopMembers;
 import com.example.may.myapplication.repositories.UserRepository;
 import com.example.may.myapplication.utils.DateFormatter;
-import com.example.may.myapplication.viewModels.UserViewModel;
+import com.example.may.myapplication.utils.NotificationsHelper;
 import com.example.may.myapplication.viewModels.WorkshopMembersViewModel;
 import com.example.may.myapplication.viewModels.WorkshopViewModel;
 
@@ -245,14 +247,22 @@ public class ViewWorkshop extends AppCompatActivity {
         findViewById(R.id.btn_unregister).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-            Model.instance().unregisterMemberFromWorkshop(workshopId, userId);
+                Model.instance().unregisterMemberFromWorkshop(workshopId, userId);
             }
         });
 
         findViewById(R.id.btn_waitinglist).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-            Model.instance().enterWaitingList(workshopId, userId);
+            Model.instance().enterWaitingList(workshopId, userId, new WorkshopsMembersFirebase.LeaveWaitingListListener() {
+                @Override
+                public void onLeave() {
+
+                    Intent intent = new Intent(getApplicationContext(), ViewWorkshop.class)
+                            .putExtra("workshopId", workshopId);
+                    NotificationsHelper.send(getApplicationContext(), intent, "איזה כיף לך!", "התפנה לך מקום בסדנא:)");
+                }
+            });
             }
         });
 

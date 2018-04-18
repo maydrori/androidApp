@@ -3,7 +3,7 @@ package com.example.may.myapplication.dal;
 import android.graphics.Bitmap;
 
 import com.example.may.myapplication.dal.firebase.ModelFirebase;
-import com.example.may.myapplication.dal.sql.ModelSql;
+import com.example.may.myapplication.dal.firebase.WorkshopsMembersFirebase;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
 
@@ -14,7 +14,6 @@ import com.example.may.myapplication.models.Workshop;
 public class Model {
 
     private static Model instance = new Model();
-    ModelSql modelSql = new ModelSql();
     ModelFirebase modelFirebase = new ModelFirebase();
 
     public static Model instance() {
@@ -26,7 +25,7 @@ public class Model {
     }
 
     public void saveWorkshop(Workshop w) {
-        modelFirebase.workshops.addWorkshop(w);
+        modelFirebase.workshops.saveWorkshop(w);
     }
 
     public void getWorkshopById(String workshopId, ModelFirebase.GetDataListener listener) {
@@ -45,12 +44,12 @@ public class Model {
         modelFirebase.workshopsMembers.unregisterMemberFromWorkshop(workshopId, userId);
     }
 
-    public void enterWaitingList(String workshopId, String userId) {
-        modelFirebase.workshopsMembers.enterWaitingList(workshopId, userId);
-    }
-
     public void leaveWaitingList(String workshopId, String userId) {
         modelFirebase.workshopsMembers.leaveWaitingList(workshopId, userId);
+    }
+
+    public void enterWaitingList(String workshopId, String userId, WorkshopsMembersFirebase.LeaveWaitingListListener listener) {
+        modelFirebase.workshopsMembers.enterWaitingList(workshopId, userId, listener);
     }
 
     public void getWorkshopMembers(String workshopId, ModelFirebase.GetDataListener listener) {

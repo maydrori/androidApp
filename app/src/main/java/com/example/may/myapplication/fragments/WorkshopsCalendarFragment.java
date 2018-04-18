@@ -48,7 +48,7 @@ public class WorkshopsCalendarFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         viewModel = ViewModelProviders.of(this).get(CalendarViewModel.class);
-        viewModel.init();
+//        viewModel.init();
 
         viewModel.getWorkshops().observe(this, new Observer<List<Workshop>>() {
             @Override

@@ -5,6 +5,7 @@ import android.arch.lifecycle.MutableLiveData;
 
 import com.example.may.myapplication.dal.Model;
 import com.example.may.myapplication.dal.firebase.ModelFirebase;
+import com.example.may.myapplication.dal.room.daos.UserDao;
 import com.example.may.myapplication.models.User;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -13,6 +14,8 @@ import com.google.firebase.auth.FirebaseAuth;
  */
 
 public class UserRepository {
+
+//    private UserDao userDao;
 
     static public LiveData<User> getUser(String userId) {
         final MutableLiveData<User> data = new MutableLiveData<>();
