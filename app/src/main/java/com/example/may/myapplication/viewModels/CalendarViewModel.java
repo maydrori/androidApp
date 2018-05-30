@@ -4,8 +4,10 @@ import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.ViewModel;
+import android.graphics.Bitmap;
 import android.view.View;
 
+import com.example.may.myapplication.dal.room.daos.WorkshopDao;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
 import com.example.may.myapplication.repositories.UserRepository;
@@ -19,22 +21,22 @@ import java.util.List;
 
 public class CalendarViewModel extends ViewModel {
 
-    private LiveData<List<Workshop>> workshops;
+    private LiveData<List<WorkshopDao.WorkshopMini>> calendarWorkshops;
 
     public CalendarViewModel () {
-        workshops = WorkshopsRepository.instance.getAllWorkshops();
+
+        calendarWorkshops = WorkshopsRepository.instance.getAllWorkshopsForCalendar();
     }
 
-//    public void init() {
-//        if (this.workshops != null) {
-//            // ViewModel is created per Fragment so
-//            // we know the userId won't change
-//            return;
-//        }
-//        workshops = WorkshopsRepository.getAllWorkshops();
-//    }
+    public LiveData<Bitmap> getImage(String url, String userId) {
+        return UserRepository.instance.getUserImage(url, userId);
+    }
 
-    public LiveData<List<Workshop>> getWorkshops() {
-        return this.workshops;
+    public LiveData<List<WorkshopDao.WorkshopMini>> getWorkshopsForCalendar() {
+        return this.calendarWorkshops;
+    }
+
+    public LiveData<List<Workshop>> getWorkshopsByIds(List<String> ids) {
+        return WorkshopsRepository.instance.getAllWorkshopsByIds(ids);
     }
 }

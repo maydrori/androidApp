@@ -10,10 +10,6 @@
             android:icon="@drawable/ic_add"
             android:title="@string/profile" />
         <item
-            android:id="@+id/nav_favorites"
-            android:icon="@drawable/ic_add"
-            android:title="@string/favorites" />
-        <item
             android:id="@+id/nav_logout"
             android:icon="@drawable/ic_add"
             android:title="@string/logout" />

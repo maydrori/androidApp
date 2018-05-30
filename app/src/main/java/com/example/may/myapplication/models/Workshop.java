@@ -1,12 +1,14 @@
 package com.example.may.myapplication.models;
 
+import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Embedded;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -25,6 +27,11 @@ public class Workshop implements Serializable {
     private String genre;
     private String level;
     private int maxParticipants;
+    public List<String> registeredMembers;
+    public List<String> waitingListMembers;
+
+    String teacherName;
+    String teacherImageUrl;
 
     private long lastUpdated;
 
@@ -103,5 +110,37 @@ public class Workshop implements Serializable {
 
     public void setLastUpdated(long lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public List<String> getRegisteredMembers() {
+        return registeredMembers;
+    }
+
+    public void setRegisteredMembers(List<String> registeredMembers) {
+        this.registeredMembers = registeredMembers;
+    }
+
+    public List<String> getWaitingListMembers() {
+        return waitingListMembers;
+    }
+
+    public void setWaitingListMembers(List<String> waitingListMembers) {
+        this.waitingListMembers = waitingListMembers;
+    }
+
+    public String getTeacherName() {
+        return teacherName;
+    }
+
+    public void setTeacherName(String teacherName) {
+        this.teacherName = teacherName;
+    }
+
+    public String getTeacherImageUrl() {
+        return teacherImageUrl;
+    }
+
+    public void setTeacherImageUrl(String teacherImageUrl) {
+        this.teacherImageUrl = teacherImageUrl;
     }
 }

@@ -7,6 +7,8 @@ import com.example.may.myapplication.dal.firebase.WorkshopsMembersFirebase;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
 
+import java.util.Date;
+
 /**
  * Created by May on 4/4/2018.
  */
@@ -52,19 +54,17 @@ public class Model {
         modelFirebase.workshopsMembers.enterWaitingList(workshopId, userId, listener);
     }
 
-    public void getWorkshopMembers(String workshopId, ModelFirebase.GetDataListener listener) {
-        modelFirebase.workshopsMembers.getWorkshopMembers(workshopId, listener);
-    }
-
     public void getUserById(String id, ModelFirebase.GetDataListener listener) {
         modelFirebase.users.getUserById(id, listener);
     }
 
-    public void saveUser(User u) {modelFirebase.users.saveUser(u);}
+    public void saveUser(User u) {
+        u.setLastUpdated(new Date().getTime());
+        modelFirebase.users.saveUser(u);
+    }
 
     public void deleteWorkshop(String workshopId) {
         modelFirebase.workshops.deleteWorkshop(workshopId);
-        modelFirebase.workshopsMembers.deleteWorkshop(workshopId);
     }
 
     public interface SaveImageListener {
@@ -73,7 +73,7 @@ public class Model {
     }
 
     public interface GetImageListener {
-        void onSuccess(Bitmap bitmap);
+        void onSuccess(Bitmap bitmap, long lastUpdated);
         void onFail();
     }
 
@@ -100,8 +100,8 @@ public class Model {
 
         modelFirebase.getImage(imageName, new GetImageListener() {
             @Override
-            public void onSuccess(Bitmap bitmap) {
-                listener.onSuccess(bitmap);
+            public void onSuccess(Bitmap bitmap, long lastUpdated) {
+                listener.onSuccess(bitmap, lastUpdated);
             }
 
             @Override

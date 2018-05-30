@@ -1,9 +1,10 @@
-package com.example.may.myapplication;
+package com.example.may.myapplication.activities;
 
 import android.support.v4.app.FragmentTransaction;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
+import com.example.may.myapplication.R;
 import com.example.may.myapplication.fragments.LoginFragment;
 
 /**

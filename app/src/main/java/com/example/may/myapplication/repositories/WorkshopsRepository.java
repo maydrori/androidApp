@@ -4,20 +4,27 @@ import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.media.Image;
 import android.os.AsyncTask;
 
-import com.amitshekhar.DebugDB;
 import com.example.may.myapplication.MyApp;
+import com.example.may.myapplication.dal.Model;
 import com.example.may.myapplication.dal.firebase.ModelFirebase;
 import com.example.may.myapplication.dal.firebase.WorkshopsFirebase;
 import com.example.may.myapplication.dal.room.AppDatabase;
+import com.example.may.myapplication.dal.room.daos.WorkshopDao;
+import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
-import com.example.may.myapplication.models.WorkshopMembers;
+import com.example.may.myapplication.utils.ImageHelper;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Date;
 import java.util.List;
 
 /**
- * Created by May on 4/17/2018.
+ * Created by May on 4 /17/2018.
  */
 
 public class WorkshopsRepository {
@@ -25,46 +32,53 @@ public class WorkshopsRepository {
     public static final WorkshopsRepository instance = new WorkshopsRepository();
     public WorkshopsFirebase workshopsFirebase = ModelFirebase.getInstance().workshops;
 
-    private MutableLiveData<List<Workshop>> allWorkshops = new MutableLiveData<>();
-
-    WorkshopsRepository() {
-//        allWorkshops = new MutableLiveData<>();
-    }
-
-    static public LiveData<WorkshopMembers> getWorkshopMembers(String workshopId) {
-        final MutableLiveData<WorkshopMembers> data = new MutableLiveData<>();
-
-//        data.setValue(AppDatabase.db.workshopDao().findById(workshopId));
-
-//        Model.instance().getWorkshopById(workshopId, new ModelFirebase.GetDataListener<Workshop>() {
-//            @Override
-//            public void onComplete(Workshop workshop) {
-//                data.setValue(workshop);
-//            }
-//        });
-
-        return data;
-    }
-
     static public LiveData<Workshop> getWorkshop(String workshopId) {
-        final MutableLiveData<Workshop> data = new MutableLiveData<>();
-
-        data.setValue(AppDatabase.db.workshopDao().findById(workshopId));
-
-//        Model.instance().getWorkshopById(workshopId, new ModelFirebase.GetDataListener<Workshop>() {
-//            @Override
-//            public void onComplete(Workshop workshop) {
-//                data.setValue(workshop);
-//            }
-//        });
-
-        return data;
+        return AppDatabase.db.workshopDao().getFullWorkshop(workshopId);
     }
 
-    public LiveData<List<Workshop>> getAllWorkshops() {
+    public LiveData<List<Workshop>> getAllWorkshopsByIds(List<String> ids) {
 
-        // Get last update date
-        final long lastUpdateDate = MyApp.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong("lastUpdateDate", 0);
+        return AppDatabase.db.workshopDao().findByIds(ids);
+    }
+
+    public LiveData<List<WorkshopDao.WorkshopMini>> getAllWorkshopsForCalendar() {
+        syncWorkshops();
+        syncUsers();
+
+        return AppDatabase.db.workshopDao().getAllForCalendar();
+    }
+
+    private void syncUsers() {
+        final long lastUpdateDate = MyApp.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong("usersLastUpdateDate", 0);
+
+        // Get all workshop records that where updated since last update date
+        ModelFirebase.getInstance().users.getAllUsers(new ModelFirebase.GetDataListener<List<User>>() {
+            @Override
+            public void onComplete(List<User> data) {
+                if (data != null && data.size() > 0) {
+                    // Update the local db
+                    long recentUpdate = 0;
+//                    lastUpdateDate;
+                    for (final User user : data) {
+                        if (user.getLastUpdated() >= recentUpdate) {
+                            AsyncTask.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    AppDatabase.db.userDao().insertAll(user);
+                                }
+                            });
+                        }
+                    }
+                    SharedPreferences.Editor editor = MyApp.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
+                    editor.putLong("usersLastUpdateDate", new Date().getTime());
+                    editor.commit();
+                }
+            }
+        });
+    }
+
+    private void syncWorkshops() {
+        final long lastUpdateDate = MyApp.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong("workshopsLastUpdateDate", 0);
 
         // Get all workshop records that where updated since last update date
         workshopsFirebase.getAllWorkshops(new ModelFirebase.GetDataListener<List<Workshop>>() {
@@ -72,76 +86,23 @@ public class WorkshopsRepository {
             public void onComplete(List<Workshop> data) {
                 if (data != null && data.size() > 0) {
                     // Update the local db
-                    long recentUpdate = lastUpdateDate;
+                    long recentUpdate = 0;
+//                    lastUpdateDate;
                     for (final Workshop workshop : data) {
-                        AsyncTask.execute(new Runnable() {
-                            @Override
-                            public void run() {
-                                AppDatabase.db.workshopDao().insertAll(workshop);
-//                                // Insert Data
-//                                AppDatabase.getInstance(context).userDao().insert(new User(1,"James","Mathew"));
-//
-//                                // Get Data
-//                                AppDatabase.getInstance(context).userDao().getAllUsers();
-                            }
-                        });
-//                        AppDatabase.db.workshopDao().insertAll(workshop);
-                        if (workshop.getLastUpdated() > recentUpdate) {
-                            recentUpdate = workshop.getLastUpdated();
+                        if (workshop.getLastUpdated() >= recentUpdate) {
+                            AsyncTask.execute(new Runnable() {
+                                @Override
+                                public void run() {
+                                    AppDatabase.db.workshopDao().insertAll(workshop);
+                                }
+                            });
                         }
                     }
                     SharedPreferences.Editor editor = MyApp.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
-                    editor.putLong("lastUpdateDate", recentUpdate);
+                    editor.putLong("workshopsLastUpdateDate", new Date().getTime());
+                    editor.commit();
                 }
-
-                allWorkshops = (MutableLiveData<List<Workshop>>)AppDatabase.db.workshopDao().getAll();
-//                allWorkshops.setValue(workshops);
             }
         });
-
-        return allWorkshops;
     }
-
-//    public LiveData<List<Workshop>> getWorkshopById(String workshopId) {
-//        return allWorkshops.getValue();
-//    }
-
-//    static public LiveData<List<Workshop>> getAllWorkshops() {
-//        final MutableLiveData<List<Workshop>> data = new MutableLiveData<>();
-//
-//        Model.instance().getAllWorkshops(new ModelFirebase.GetDataListener<List<Workshop>>() {
-//            @Override
-//            public void onComplete(List<Workshop> workshops) {
-//                data.setValue(workshops);
-//            }
-//        });
-//
-//        return data;
-//    }
-//
-//    static public LiveData<Workshop> getWorkshop(String workshopId) {
-//        final MutableLiveData<Workshop> data = new MutableLiveData<>();
-//
-//        Model.instance().getWorkshopById(workshopId, new ModelFirebase.GetDataListener<Workshop>() {
-//            @Override
-//            public void onComplete(Workshop workshop) {
-//                data.setValue(workshop);
-//            }
-//        });
-//
-//        return data;
-//    }
-//
-//    static public LiveData<WorkshopMembers> getWorkshopMembers(String workshopId) {
-//        final MutableLiveData<WorkshopMembers> data = new MutableLiveData<>();
-//
-//        Model.instance().getWorkshopMembers(workshopId, new ModelFirebase.GetDataListener<WorkshopMembers>() {
-//            @Override
-//            public void onComplete(WorkshopMembers workshopMembers) {
-//                data.setValue(workshopMembers);
-//            }
-//        });
-//
-//        return data;
-//    }
 }

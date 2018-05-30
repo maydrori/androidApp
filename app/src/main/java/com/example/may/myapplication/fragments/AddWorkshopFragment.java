@@ -37,6 +37,17 @@ public class AddWorkshopFragment extends DialogFragment {
     Spinner genreInput;
     Spinner levelInput;
 
+    public static AddWorkshopFragment instance(Workshop workshop) {
+
+        AddWorkshopFragment fragment = new AddWorkshopFragment();
+
+        Bundle args = new Bundle();
+        args.putSerializable("workshop", workshop);
+        fragment.setArguments(args);
+
+        return fragment;
+    }
+
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
@@ -49,7 +60,7 @@ public class AddWorkshopFragment extends DialogFragment {
     public void onStart() {
         super.onStart();
 
-        workshop = (getArguments() != null) ? (Workshop)getArguments().getSerializable("workshop") : null;
+        workshop = (Workshop)getArguments().getSerializable("workshop");
 
         initDialogInputs();
     }

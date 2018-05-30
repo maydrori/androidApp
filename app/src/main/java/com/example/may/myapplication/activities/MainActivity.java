@@ -1,7 +1,9 @@
-package com.example.may.myapplication;
+package com.example.may.myapplication.activities;
 
+import android.arch.lifecycle.LifecycleOwner;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.graphics.Bitmap;
 import android.media.Image;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -16,6 +18,8 @@ import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.may.myapplication.R;
+import com.example.may.myapplication.fragments.LoginFragment;
 import com.example.may.myapplication.fragments.UserProfileFragment;
 import com.example.may.myapplication.fragments.WorkshopsCalendarFragment;
 import com.example.may.myapplication.models.User;
@@ -73,11 +77,18 @@ public class MainActivity extends AppCompatActivity  {
         userViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
         userViewModel.init(UserRepository.getCurrentUserId());
 
-        userViewModel.getUser().observe(this, new Observer<User>() {
+        final LifecycleOwner owner = this;
+        userViewModel.getUser().observe(owner, new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
                 navUserName.setText(user.getName());
-                ImageHelper.loadImageToView(user.getImageUrl(), user.getId(), navUserImage);
+
+                userViewModel.getImage(user.getImageUrl(), user.getId()).observe(owner, new Observer<Bitmap>() {
+                    @Override
+                    public void onChanged(@Nullable Bitmap bitmap) {
+                        navUserImage.setImageBitmap(bitmap);
+                    }
+                });
             }
         });
     }
@@ -103,11 +114,14 @@ public class MainActivity extends AppCompatActivity  {
             case R.id.nav_profile:
                 fragment = UserProfileFragment.instance(FirebaseAuth.getInstance().getCurrentUser().getUid());
                 break;
+            case R.id.nav_logout:
+                FirebaseAuth.getInstance().signOut();
+                fragment = new LoginFragment();
+                break;
         }
 
         fragmentManager.beginTransaction()
                 .replace(R.id.content_frame, fragment)
-                .addToBackStack(null)
                 .commit();
     }
 }

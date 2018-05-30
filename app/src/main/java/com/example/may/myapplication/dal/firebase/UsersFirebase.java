@@ -1,10 +1,15 @@
 package com.example.may.myapplication.dal.firebase;
 
 import com.example.may.myapplication.models.User;
+import com.example.may.myapplication.models.Workshop;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by May on 4/4/2018.
@@ -21,9 +26,30 @@ public class UsersFirebase {
         ref.child(u.getId()).setValue(u);
     }
 
+    public void getAllUsers(final ModelFirebase.GetDataListener listener) {
+
+        // Getting updates
+        ref.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+
+                List<User> users = new ArrayList<User>();
+                for (DataSnapshot elem: dataSnapshot.getChildren()) {
+                    users.add(elem.getValue(User.class));
+                }
+                listener.onComplete(users);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
     public void getUserById(String id, final ModelFirebase.GetDataListener listener) {
 
-        ref.child(id).addListenerForSingleValueEvent((new ValueEventListener() {
+        ref.child(id).addValueEventListener((new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 

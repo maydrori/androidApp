@@ -1,7 +1,10 @@
 package com.example.may.myapplication.adapters;
 
+import android.arch.lifecycle.LifecycleOwner;
+import android.arch.lifecycle.Observer;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +18,7 @@ import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
 import com.example.may.myapplication.dal.firebase.ModelFirebase;
 import com.example.may.myapplication.utils.ImageHelper;
+import com.example.may.myapplication.viewModels.CalendarViewModel;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -26,19 +30,20 @@ import java.util.Locale;
 
 public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
 
+    private CalendarViewModel viewModel;
+    private LifecycleOwner owner;
     private int layoutResource;
     private SimpleDateFormat dateFormatForHour = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
-    public WorkshopListViewAdapter(Context context, int layoutResource, List<Workshop> workshop) {
+    public WorkshopListViewAdapter(Context context, LifecycleOwner owner, CalendarViewModel viewModel, int layoutResource, List<Workshop> workshop) {
         super(context, layoutResource, workshop);
         this.layoutResource = layoutResource;
+        this.viewModel = viewModel;
+        this.owner = owner;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-
-        // TODO: here we need to get the images... save locally
-        // Try to find good library that do this auto!!!
 
         View view = convertView;
 
@@ -47,7 +52,7 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
             view = layoutInflater.inflate(layoutResource, null);
         }
 
-        Workshop workshop = getItem(position);
+        final Workshop workshop = getItem(position);
 
         if (workshop != null) {
             TextView hourTextView = (TextView) view.findViewById(R.id.hour);
@@ -56,22 +61,25 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
 
             hourTextView.setText(dateFormatForHour.format(workshop.getDate()));
             placeTextView.setText(workshop.getPlace());
+            teacherTextView.setText(workshop.getTeacherName());
 
-            setTeacherInfo(workshop.getTeacherId(), view);
+            if (workshop.getTeacherImageUrl() != null) setTeacherPhoto(workshop, view);
         }
 
         return view;
     }
 
-    private void setTeacherInfo(String id, final View view) {
-        Model.instance().getUserById(id, new ModelFirebase.GetDataListener<User>() {
+    private void setTeacherPhoto(final Workshop workshop, View view) {
+        final ImageView teacherPhoto = view.findViewById(R.id.teacher_pic);
+
+        teacherPhoto.setTag(workshop.getTeacherImageUrl());
+
+        viewModel.getImage(workshop.getTeacherImageUrl(), workshop.getTeacherId()).observe(owner, new Observer<Bitmap>() {
             @Override
-            public void onComplete(final User user) {
-                ((TextView) view.findViewById(R.id.teacher)).setText(user.getName());
-
-                final ImageView teacherPhoto = view.findViewById(R.id.teacher_pic);
-
-                ImageHelper.loadImageToView(user.getImageUrl(), user.getId(), teacherPhoto);
+            public void onChanged(@Nullable Bitmap bitmap) {
+                if (teacherPhoto.getTag().equals(workshop.getTeacherImageUrl())) {
+                    teacherPhoto.setImageBitmap(bitmap);
+                }
             }
         });
     }

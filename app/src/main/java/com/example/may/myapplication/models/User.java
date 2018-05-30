@@ -17,16 +17,12 @@ public class User {
     @PrimaryKey
     @NonNull
     private String id;
-    @ColumnInfo
     private String name;
-    @ColumnInfo
     private String instegramLink;
-    @ColumnInfo
     private String facebookLink;
-    @ColumnInfo
     private String phone;
-    @ColumnInfo
     private String imageUrl;
+    private long lastUpdated;
 
     public User() {}
 
@@ -89,5 +85,13 @@ public class User {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public long getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(long lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 }

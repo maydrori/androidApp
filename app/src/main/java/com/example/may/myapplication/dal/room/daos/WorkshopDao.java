@@ -8,8 +8,8 @@ import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
 import android.arch.persistence.room.Query;
 
+import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
-import com.example.may.myapplication.models.WorkshopMembers;
 
 import java.util.List;
 
@@ -19,53 +19,55 @@ import java.util.List;
 
 @Dao
 public interface WorkshopDao {
-    @Query("SELECT * FROM Workshop")
-    LiveData<List<Workshop>> getAll();
 
-//    @Query("SELECT * FROM user WHERE id IN (:userIds)")
-//    List<User> loadAllByIds(int[] userIds);
+//    @Query("SELECT Workshop.*, User.name as teacherName, User.imageUrl as teacherImageUrl FROM Workshop "
+//            + "INNER JOIN User ON Workshop.teacherId = User.id ")
+//    LiveData<List<Workshop>> getAll();
+
+    @Query("SELECT id, date FROM Workshop")
+    LiveData<List<WorkshopMini>> getAllForCalendar();
 
     @Query("SELECT * FROM Workshop WHERE id LIKE :id LIMIT 1")
-    Workshop findById(String id);
+    LiveData<Workshop> findById(String id);
+
+    @Query("SELECT Workshop.*, User.name as teacherName, User.imageUrl as teacherImageUrl FROM Workshop "
+            + "INNER JOIN User ON Workshop.teacherId = User.id "
+            + "WHERE Workshop.id IN (:ids)"
+            + "ORDER BY Workshop.date ASC")
+    LiveData<List<Workshop>> findByIds(List<String> ids);
+
+    @Query("SELECT * FROM Workshop")
+    List<Workshop> findAll();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAll(Workshop... workshops);
 
+    @Query("SELECT Workshop.*, User.name as teacherName, User.imageUrl as teacherImageUrl FROM Workshop "
+            + "INNER JOIN User ON Workshop.teacherId = User.id "
+            + "WHERE Workshop.id=:id")
+    LiveData<Workshop> getFullWorkshop(String id);
+
     @Delete
     void delete(Workshop workshop);
 
-//    @Query("SELECT * FROM workshops "
-//            + "INNER JOIN workshopMembers ON workshopMembers.workshopId = workshops.id "
-//            + "WHERE workshops.id LIKE :workshopId")
-//    public LiveData<Workshop> getWorkshopAndMembers(String workshopId);
+    class WorkshopMini {
+        String id;
+        long date;
 
+        public String getId() {
+            return id;
+        }
 
+        public void setId(String id) {
+            this.id = id;
+        }
 
+        public long getDate() {
+            return date;
+        }
 
-
-
-//    @Query("SELECT Foo.*, Bar.* FROM Foo INNER JOIN Bar ON Foo.bar = Bar.id")
-//    List<FooAndBar> findAllFooAndBar();
-//
-//    public class WorkshopAndMembers {
-//        @Embedded
-//        Workshop workshop;
-//
-//        @Embedded
-//        WorkshopMembers workshopMembers;
-
-        //Getter and setter...
-//    }
-
-//    @Query("SELECT user.name AS userName, pet.name AS petName "
-//            + "FROM user, pet "
-//            + "WHERE user.id = pet.user_id")
-//    public LiveData<Workshop> loadUserAndPetNames();
-//
-//    // You can also define this class in a separate file, as long as you add the
-//    // "public" access modifier.
-//    static class WorkshopAndMembers {
-//        public String userName;
-//        public String petName;
-//    }
+        public void setDate(long date) {
+            this.date = date;
+        }
+    }
 }

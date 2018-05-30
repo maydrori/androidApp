@@ -1,6 +1,7 @@
 package com.example.may.myapplication.fragments;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -12,15 +13,20 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.may.myapplication.MainActivity;
+import com.example.may.myapplication.activities.MainActivity;
 import com.example.may.myapplication.R;
 import com.example.may.myapplication.dal.Model;
+import com.example.may.myapplication.dal.room.AppDatabase;
 import com.example.may.myapplication.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.SignInMethodQueryResult;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * Created by May on 4/7/2018.
@@ -53,6 +59,45 @@ public class LoginFragment extends Fragment {
         startActivity(i);
     }
 
+    private void createNewUser(String userEmail) {
+        mAuth.createUserWithEmailAndPassword(userEmail, "123565")
+            .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+                    if (task.isSuccessful()) {
+                        final FirebaseUser user = mAuth.getCurrentUser();
+                        // TODO
+                        Model.instance().saveUser(new User(user.getUid()));
+//                        AsyncTask.execute(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                User newUser = new User(user.getUid());
+//                                newUser.setLastUpdated(new Date().getTime());
+//                                AppDatabase.db.userDao().save(newUser);
+//                            }
+//                        });
+                        initProfileFragment(user.getUid());
+                    } else {
+                        Toast.makeText(getActivity(), "Authentication failed.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+    }
+
+    private void signIn(String userEmail) {
+        mAuth.signInWithEmailAndPassword(userEmail, "123565")
+                .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            goToMainActivity();
+                        } else {
+                            Toast.makeText(getActivity(), "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
     private void handleLoginButton() {
 
         getView().findViewById(R.id.btn_login).setOnClickListener(new View.OnClickListener() {
@@ -61,21 +106,16 @@ public class LoginFragment extends Fragment {
 
             // Save the user id in order to use it later
             EditText userIdInput = getView().findViewById(R.id.text_user_id);
-            String userId = userIdInput.getText().toString().trim();
+            final String userEmail = userIdInput.getText().toString().trim();
 
-            mAuth.createUserWithEmailAndPassword(userId, "123565")
-                .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            FirebaseUser user = mAuth.getCurrentUser();
-                            Model.instance().saveUser(new User(user.getUid()));
-                            initProfileFragment(user.getUid());
-                        } else {
-                            Toast.makeText(getActivity(), "FirebaseAuthentication failed.", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
+            // If the user doesn't exist, the result will be empty array
+            mAuth.fetchSignInMethodsForEmail(userEmail).addOnCompleteListener(new OnCompleteListener<SignInMethodQueryResult>() {
+                @Override
+                public void onComplete(@NonNull Task<SignInMethodQueryResult> task) {
+                    if (task.getResult().getSignInMethods().isEmpty()) createNewUser(userEmail);
+                    else signIn(userEmail);
+                }
+            });
             }
         });
     }

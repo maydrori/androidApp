@@ -1,7 +1,12 @@
 package com.example.may.myapplication.viewModels;
 
 import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.MediatorLiveData;
+import android.arch.lifecycle.MutableLiveData;
+import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModel;
+import android.graphics.Bitmap;
+import android.support.annotation.Nullable;
 
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.repositories.UserRepository;
@@ -23,7 +28,11 @@ public class UserViewModel extends ViewModel{
         user = UserRepository.getUser(userId);
     }
 
+    public LiveData<Bitmap> getImage(String url, String userId) {
+        return UserRepository.instance.getUserImage(url, userId);
+    }
+
     public LiveData<User> getUser() {
-        return this.user;
+        return user;
     }
 }

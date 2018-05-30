@@ -2,8 +2,12 @@ package com.example.may.myapplication.viewModels;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.ViewModel;
+import android.graphics.Bitmap;
 
+import com.example.may.myapplication.dal.room.daos.WorkshopDao;
+import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
+import com.example.may.myapplication.repositories.UserRepository;
 import com.example.may.myapplication.repositories.WorkshopsRepository;
 
 /**
@@ -21,54 +25,13 @@ public class WorkshopViewModel extends ViewModel{
             return;
         }
         workshop = WorkshopsRepository.instance.getWorkshop(workshopId);
-
     }
 
     public LiveData<Workshop> getWorkshop() {
         return this.workshop;
     }
 
-
-//    private MediatorLiveData<CompositeModel> compositeModelLiveData;
-//
-//    public static class CompositeModel {
-//
-//        Workshop workshop;
-//        WorkshopMembers workshopMembers;
-//
-//        public Workshop getWorkshop() {
-//            return workshop;
-//        }
-//
-//        public WorkshopMembers getWorkshopMembers() {
-//            return workshopMembers;
-//        }
-//    }
-//
-//
-//        this.compositeModelLiveData = new MediatorLiveData<>();
-//        this.compositeModelLiveData.addSource(workshop, new Observer<Workshop>() {
-//        @Override
-//        public void onChanged(@Nullable Workshop workshop) {
-//            CompositeModel compositeModel = compositeModelLiveData.getValue();
-//            compositeModel.workshop = workshop;
-//            if (compositeModel.workshopMembers != null) compositeModelLiveData.postValue(compositeModel);
-//        }
-//    });
-//
-//        this.compositeModelLiveData.addSource(workshopMembers, new Observer<WorkshopMembers>() {
-//        @Override
-//        public void onChanged(@Nullable WorkshopMembers workshopMembers) {
-//            CompositeModel compositeModel = compositeModelLiveData.getValue();
-//            compositeModel.workshopMembers = workshopMembers;
-//            if (compositeModel.workshop != null) compositeModelLiveData.postValue(compositeModel);
-//        }
-//    });
-//
-//        this.compositeModelLiveData.setValue(new CompositeModel());
-//
-//
-//    public LiveData<CompositeModel> getCompositeEntrys() {
-//        return compositeModelLiveData;
-//    }
+    public LiveData<Bitmap> getTeacherImage(String url, String userId) {
+        return UserRepository.instance.getUserImage(url, userId);
+    }
 }

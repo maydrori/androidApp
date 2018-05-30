@@ -10,7 +10,6 @@ import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 
 import com.example.may.myapplication.R;
-import com.example.may.myapplication.ViewWorkshop;
 
 /**
  * Created by May on 4/14/2018.
