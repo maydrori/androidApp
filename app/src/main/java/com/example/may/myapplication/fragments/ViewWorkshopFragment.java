@@ -22,7 +22,7 @@ import android.widget.TextView;
 import com.example.may.myapplication.R;
 import com.example.may.myapplication.activities.ViewWorkshop;
 import com.example.may.myapplication.dal.Model;
-import com.example.may.myapplication.dal.firebase.WorkshopsMembersFirebase;
+import com.example.may.myapplication.dal.firebase.WorkshopsFirebase;
 import com.example.may.myapplication.models.Workshop;
 import com.example.may.myapplication.repositories.UserRepository;
 import com.example.may.myapplication.utils.DateFormatter;
@@ -122,13 +122,15 @@ public class ViewWorkshopFragment extends Fragment {
                 isMyWorkshop = workshop.getTeacherId().equals(UserRepository.getCurrentUserId());
                 setHasOptionsMenu(isMyWorkshop);
                 updateUI();
+
+                teacherPhoto.setImageResource(R.drawable.ic_person);
                 workshopViewModel.getTeacherImage(w.getTeacherImageUrl(), w.getTeacherId()).observe(owner, new Observer<Bitmap>() {
                     @Override
                     public void onChanged(@Nullable Bitmap bitmap) {
 
                         if (progressBarFinishLoading.getVisibility() == View.VISIBLE) progressBarFinishLoading.setVisibility(View.INVISIBLE);
 
-                        teacherPhoto.setImageBitmap(bitmap);
+                        if (bitmap != null) teacherPhoto.setImageBitmap(bitmap);
                     }
                 });
             }
@@ -160,7 +162,7 @@ public class ViewWorkshopFragment extends Fragment {
 
         if (isMyWorkshop) {
             ((TextView)getView().findViewById(R.id.text_members)).setText(membersOverview);
-//            btnActionToShow = R.id.btn_delete;
+            btnActionToShow = R.id.btn_delete;
         }
 
         showRelevantActionButton(btnActionToShow);
@@ -225,13 +227,14 @@ public class ViewWorkshopFragment extends Fragment {
         getView().findViewById(R.id.btn_waitinglist).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Model.instance().enterWaitingList(workshopId, userId, new WorkshopsMembersFirebase.LeaveWaitingListListener() {
+                Model.instance().enterWaitingList(workshopId, userId, new WorkshopsFirebase.LeaveWaitingListListener() {
                     @Override
                     public void onLeave() {
 
                         Intent intent = new Intent(getContext(), ViewWorkshop.class)
                                 .putExtra("workshopId", workshopId);
-                        NotificationsHelper.send(getContext(), intent, "איזה כיף לך!", "התפנה לך מקום בסדנא:)");
+
+                        NotificationsHelper.send(getContext(), intent, R.string.notification_userGotPlaceInWorkshop_title, R.string.notification_userGotPlaceInWorkshop_content);
                     }
                 });
             }

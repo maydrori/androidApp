@@ -66,16 +66,7 @@ public class LoginFragment extends Fragment {
                 public void onComplete(@NonNull Task<AuthResult> task) {
                     if (task.isSuccessful()) {
                         final FirebaseUser user = mAuth.getCurrentUser();
-                        // TODO
                         Model.instance().saveUser(new User(user.getUid()));
-//                        AsyncTask.execute(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                User newUser = new User(user.getUid());
-//                                newUser.setLastUpdated(new Date().getTime());
-//                                AppDatabase.db.userDao().save(newUser);
-//                            }
-//                        });
                         initProfileFragment(user.getUid());
                     } else {
                         Toast.makeText(getActivity(), "Authentication failed.", Toast.LENGTH_SHORT).show();

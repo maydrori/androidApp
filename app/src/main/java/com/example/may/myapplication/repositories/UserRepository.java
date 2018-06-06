@@ -9,6 +9,7 @@ import com.example.may.myapplication.dal.Model;
 import com.example.may.myapplication.dal.firebase.ModelFirebase;
 import com.example.may.myapplication.dal.firebase.UsersFirebase;
 import com.example.may.myapplication.dal.firebase.WorkshopsFirebase;
+import com.example.may.myapplication.dal.room.AppDatabase;
 import com.example.may.myapplication.dal.room.daos.UserDao;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.utils.ImageHelper;
@@ -23,21 +24,12 @@ import java.io.File;
 public class UserRepository {
 
     public static final UserRepository instance = new UserRepository();
-    public UsersFirebase usersFirebase = ModelFirebase.getInstance().users;
 
     static public LiveData<User> getUser(String userId) {
-        final MutableLiveData<User> data = new MutableLiveData<>();
-
-        Model.instance().getUserById(userId, new ModelFirebase.GetDataListener<User>() {
-            @Override
-            public void onComplete(User user) {
-                data.setValue(user);
-            }
-        });
-
-        return data;
+        return AppDatabase.db.userDao().findById(userId);
     }
 
+    // TODO - imageUrl is needed?
     public LiveData<Bitmap> getUserImage(String imageUrl, final String userId) {
 
         final MutableLiveData<Bitmap> result = new MutableLiveData<>();

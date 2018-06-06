@@ -17,7 +17,16 @@
     <string name="instegramLink">קישור לאינסטגרם</string>
     <string name="facebookLink">קישור לפייסבוק</string>
     <string name="edit">ערוך</string>
+    <string name="save">שמור</string>
+    <string name="delete">מחק</string>
+    <string name="register">רשום אותי</string>
+    <string name="unregister">בטל הרשמה</string>
+    <string name="enterWaitingList">היכנס לרשימת המתנה</string>
+    <string name="leaveWaitingList">צא מרשימת ההמתנה</string>
     <string name="participantsList">רשימת משתתפים</string>
+    <string name="alert_workshopSaved">הסדנא נשמרה בהצלחה</string>
+    <string name="notification_userGotPlaceInWorkshop_title">איזה כיף לך!</string>
+    <string name="notification_userGotPlaceInWorkshop_content">התפנה לך מקום בסדנא:)</string>
     <string-array name="class_levels">
         <item>רמת קושי</item>
         <item>מתחילים</item>

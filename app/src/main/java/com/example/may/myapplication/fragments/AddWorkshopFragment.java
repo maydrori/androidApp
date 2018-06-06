@@ -84,7 +84,7 @@ public class AddWorkshopFragment extends DialogFragment {
             Workshop workshopToSave = new Workshop(workshopId, date, UserRepository.getCurrentUserId(), place, genre, level, maxParticipants);
             Model.instance().saveWorkshop(workshopToSave);
 
-            Toast.makeText(getActivity().getApplicationContext(), "הסדנא נשמרה בהצלחה", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.alert_workshopSaved), Toast.LENGTH_SHORT).show();
 
             getDialog().dismiss();
             }

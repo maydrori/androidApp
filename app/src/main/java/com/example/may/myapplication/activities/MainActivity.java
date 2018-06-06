@@ -4,12 +4,12 @@ import android.arch.lifecycle.LifecycleOwner;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.graphics.Bitmap;
-import android.media.Image;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -17,14 +17,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.may.myapplication.R;
+import com.example.may.myapplication.dal.Model;
 import com.example.may.myapplication.fragments.LoginFragment;
 import com.example.may.myapplication.fragments.UserProfileFragment;
 import com.example.may.myapplication.fragments.WorkshopsCalendarFragment;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.repositories.UserRepository;
-import com.example.may.myapplication.utils.ImageHelper;
 import com.example.may.myapplication.viewModels.UserViewModel;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -34,11 +35,12 @@ public class MainActivity extends AppCompatActivity  {
     DrawerLayout mDrawerLayout;
 
     private void initViews() {
-        mDrawerLayout = findViewById(R.id.drawer_layout);
 
         ActionBar actionbar = getSupportActionBar();
         actionbar.setDisplayHomeAsUpEnabled(true);
         actionbar.setHomeAsUpIndicator(R.drawable.ic_menu);
+
+        mDrawerLayout = findViewById(R.id.drawer_layout);
 
         setUpNavigationView();
     }
@@ -58,6 +60,7 @@ public class MainActivity extends AppCompatActivity  {
         NavigationView navigationView = findViewById(R.id.nav_view);
         final TextView navUserName = navigationView.getHeaderView(0).findViewById(R.id.text_username);
         final ImageView navUserImage = navigationView.getHeaderView(0).findViewById(R.id.image_user);
+        navUserImage.setImageResource(R.drawable.ic_person);
 
         navigationView.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {
@@ -86,7 +89,7 @@ public class MainActivity extends AppCompatActivity  {
                 userViewModel.getImage(user.getImageUrl(), user.getId()).observe(owner, new Observer<Bitmap>() {
                     @Override
                     public void onChanged(@Nullable Bitmap bitmap) {
-                        navUserImage.setImageBitmap(bitmap);
+                        if (bitmap != null) navUserImage.setImageBitmap(bitmap);
                     }
                 });
             }
@@ -96,8 +99,10 @@ public class MainActivity extends AppCompatActivity  {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
+        Model.instance().syncRemoteData();
+
+        setContentView(R.layout.activity_main);
         initViews();
 
         switchTab(R.id.nav_home);
@@ -106,6 +111,7 @@ public class MainActivity extends AppCompatActivity  {
     private void switchTab (int menuItemId) {
         Fragment fragment;
         FragmentManager fragmentManager = getSupportFragmentManager();
+        boolean addToBackStack = false;
         switch(menuItemId) {
             default:
             case R.id.nav_home:
@@ -113,6 +119,7 @@ public class MainActivity extends AppCompatActivity  {
                 break;
             case R.id.nav_profile:
                 fragment = UserProfileFragment.instance(FirebaseAuth.getInstance().getCurrentUser().getUid());
+                addToBackStack = true;
                 break;
             case R.id.nav_logout:
                 FirebaseAuth.getInstance().signOut();
@@ -120,8 +127,11 @@ public class MainActivity extends AppCompatActivity  {
                 break;
         }
 
-        fragmentManager.beginTransaction()
-                .replace(R.id.content_frame, fragment)
-                .commit();
+        FragmentTransaction f = fragmentManager.beginTransaction()
+                .replace(R.id.content_frame, fragment);
+
+        if (addToBackStack) f.addToBackStack(null);
+
+        f.commit();
     }
 }

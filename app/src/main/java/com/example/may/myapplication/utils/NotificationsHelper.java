@@ -17,7 +17,7 @@ import com.example.may.myapplication.R;
 
 public class NotificationsHelper {
     
-    public static void send(Context context,Intent intent, String title, String text) {
+    public static void send(Context context,Intent intent, int title, int text) {
 
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context.getApplicationContext(), "notify_001");
@@ -26,8 +26,8 @@ public class NotificationsHelper {
 
         mBuilder.setContentIntent(pendingIntent);
         mBuilder.setSmallIcon(R.drawable.ic_logo);
-        mBuilder.setContentTitle(title);
-        mBuilder.setContentText(text);
+        mBuilder.setContentTitle(context.getResources().getString(title));
+        mBuilder.setContentText(context.getResources().getString(text));
         mBuilder.setPriority(Notification.PRIORITY_MAX);
         NotificationManager mNotificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

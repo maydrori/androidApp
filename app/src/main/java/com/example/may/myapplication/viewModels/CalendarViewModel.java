@@ -24,7 +24,6 @@ public class CalendarViewModel extends ViewModel {
     private LiveData<List<WorkshopDao.WorkshopMini>> calendarWorkshops;
 
     public CalendarViewModel () {
-
         calendarWorkshops = WorkshopsRepository.instance.getAllWorkshopsForCalendar();
     }
 

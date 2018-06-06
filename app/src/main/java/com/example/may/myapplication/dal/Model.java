@@ -3,7 +3,7 @@ package com.example.may.myapplication.dal;
 import android.graphics.Bitmap;
 
 import com.example.may.myapplication.dal.firebase.ModelFirebase;
-import com.example.may.myapplication.dal.firebase.WorkshopsMembersFirebase;
+import com.example.may.myapplication.dal.firebase.WorkshopsFirebase;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
 
@@ -39,19 +39,19 @@ public class Model {
     }
 
     public void registerMemberToWorkshop(String workshopId, String userId) {
-        modelFirebase.workshopsMembers.registerMemberToWorkshop(workshopId, userId);
+        modelFirebase.workshops.registerMemberToWorkshop(workshopId, userId);
     }
 
     public void unregisterMemberFromWorkshop(String workshopId, String userId) {
-        modelFirebase.workshopsMembers.unregisterMemberFromWorkshop(workshopId, userId);
+        modelFirebase.workshops.unregisterMemberFromWorkshop(workshopId, userId);
     }
 
     public void leaveWaitingList(String workshopId, String userId) {
-        modelFirebase.workshopsMembers.leaveWaitingList(workshopId, userId);
+        modelFirebase.workshops.leaveWaitingList(workshopId, userId);
     }
 
-    public void enterWaitingList(String workshopId, String userId, WorkshopsMembersFirebase.LeaveWaitingListListener listener) {
-        modelFirebase.workshopsMembers.enterWaitingList(workshopId, userId, listener);
+    public void enterWaitingList(String workshopId, String userId, WorkshopsFirebase.LeaveWaitingListListener listener) {
+        modelFirebase.workshops.enterWaitingList(workshopId, userId, listener);
     }
 
     public void getUserById(String id, ModelFirebase.GetDataListener listener) {
@@ -77,20 +77,19 @@ public class Model {
         void onFail();
     }
 
+    // TODO
     // Name need to be unique (with timestamp)
     public void saveImage(final Bitmap imageBitmap, final String name, final SaveImageListener listener) {
         modelFirebase.saveImage(imageBitmap, name,  new SaveImageListener(){
 
             @Override
             public void complete(String url) {
-//                String fileName = URLUtil.guessFileName(url, null, null);
-//                saveImageToFile(imageBitmap, fileName);
                 listener.complete(url);
             }
 
             @Override
             public void fail() {
-
+                listener.fail();
             }
         });
 
@@ -106,8 +105,12 @@ public class Model {
 
             @Override
             public void onFail() {
-
+                listener.onFail();
             }
         });
+    }
+
+    public void syncRemoteData() {
+        modelFirebase.syncRemoteData();
     }
 }

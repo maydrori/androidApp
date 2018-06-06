@@ -7,9 +7,7 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.UserManager;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -24,13 +22,11 @@ import android.widget.Toast;
 
 import com.example.may.myapplication.R;
 import com.example.may.myapplication.dal.Model;
-import com.example.may.myapplication.dal.room.AppDatabase;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.repositories.UserRepository;
 import com.example.may.myapplication.viewModels.UserViewModel;
 
 import java.io.IOException;
-import java.util.Date;
 
 /**
  * Created by May on 4/7/2018.
@@ -74,7 +70,7 @@ public class UserProfileFragment extends Fragment {
                 userViewModel.getImage(user.getImageUrl(), user.getId()).observe(owner, new Observer<Bitmap>() {
                     @Override
                     public void onChanged(@Nullable Bitmap bitmap) {
-                        userPhoto.setImageBitmap(bitmap);
+                        if (bitmap != null) userPhoto.setImageBitmap(bitmap);
                     }
                 });
             }
@@ -126,15 +122,7 @@ public class UserProfileFragment extends Fragment {
     private void saveUser(final User user) {
 
         // Save the user
-        // TODO
-//        user.setLastUpdated(new Date().getTime());
         Model.instance().saveUser(user);
-//        AsyncTask.execute(new Runnable() {
-//            @Override
-//            public void run() {
-//                AppDatabase.db.userDao().save(user);
-//            }
-//        });
 
         // Alert success
         Toast.makeText(getActivity().getApplicationContext(), "העדכון בוצע בהצלחה", Toast.LENGTH_SHORT).show();
@@ -164,6 +152,7 @@ public class UserProfileFragment extends Fragment {
         instegramLinkInput = getView().findViewById(R.id.text_instegram);
         facebookLinkInput = getView().findViewById(R.id.text_facebook);
         userPhoto = getView().findViewById(R.id.image_user);
+        userPhoto.setImageResource(R.drawable.ic_person);
         btnEditImage = getView().findViewById(R.id.btn_edit_image);
         btnSaveProfile = getView().findViewById(R.id.btn_save_profile);
 

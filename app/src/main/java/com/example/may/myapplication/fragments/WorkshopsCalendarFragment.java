@@ -91,12 +91,7 @@ public class WorkshopsCalendarFragment extends Fragment {
             workshopsAdapter.notifyDataSetChanged();
         }
         else {
-            AsyncTask.execute(new Runnable() {
-                @Override
-                public void run() {
-                    List<Workshop> all = AppDatabase.db.workshopDao().findAll();
-                }
-            });
+
             viewModel.getWorkshopsByIds(wokshopsIds).observe(this, new Observer<List<Workshop>>() {
                 @Override
                 public void onChanged(@Nullable List<Workshop> workshops) {

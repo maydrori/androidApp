@@ -1,5 +1,6 @@
 package com.example.may.myapplication.dal.room.daos;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
@@ -20,11 +21,8 @@ public interface UserDao {
     @Query("SELECT * FROM User")
     List<User> getAll();
 
-//    @Query("SELECT * FROM user WHERE id IN (:userIds)")
-//    List<User> loadAllByIds(int[] userIds);
-
     @Query("SELECT * FROM User WHERE id LIKE :id LIMIT 1")
-    User findById(String id);
+    LiveData<User> findById(String id);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void save(User user);

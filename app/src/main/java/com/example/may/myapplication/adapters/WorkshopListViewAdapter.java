@@ -54,6 +54,7 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
 
         final Workshop workshop = getItem(position);
 
+        // Set up workshop's info
         if (workshop != null) {
             TextView hourTextView = (TextView) view.findViewById(R.id.hour);
             TextView teacherTextView = (TextView) view.findViewById(R.id.teacher);
@@ -63,7 +64,7 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
             placeTextView.setText(workshop.getPlace());
             teacherTextView.setText(workshop.getTeacherName());
 
-            if (workshop.getTeacherImageUrl() != null) setTeacherPhoto(workshop, view);
+            setTeacherPhoto(workshop, view);
         }
 
         return view;
@@ -71,14 +72,15 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
 
     private void setTeacherPhoto(final Workshop workshop, View view) {
         final ImageView teacherPhoto = view.findViewById(R.id.teacher_pic);
+        teacherPhoto.setImageResource(R.drawable.ic_person);
 
-        teacherPhoto.setTag(workshop.getTeacherImageUrl());
+        teacherPhoto.setTag(workshop.getTeacherId());
 
         viewModel.getImage(workshop.getTeacherImageUrl(), workshop.getTeacherId()).observe(owner, new Observer<Bitmap>() {
             @Override
             public void onChanged(@Nullable Bitmap bitmap) {
-                if (teacherPhoto.getTag().equals(workshop.getTeacherImageUrl())) {
-                    teacherPhoto.setImageBitmap(bitmap);
+                if (teacherPhoto.getTag().equals(workshop.getTeacherId())) {
+                    if (bitmap != null) teacherPhoto.setImageBitmap(bitmap);
                 }
             }
         });
