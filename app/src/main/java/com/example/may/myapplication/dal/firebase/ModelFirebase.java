@@ -3,16 +3,17 @@ package com.example.may.myapplication.dal.firebase;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.example.may.myapplication.MyApp;
 import com.example.may.myapplication.dal.Model;
-import com.example.may.myapplication.dal.room.AppDatabase;
+import com.example.may.myapplication.dal.room.daos.UserAsyncDao;
+import com.example.may.myapplication.dal.room.daos.WorkshopAsyncDao;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
+import com.example.may.myapplication.repositories.UserRepository;
 import com.example.may.myapplication.utils.ImageHelper;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -24,10 +25,7 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.ByteArrayOutputStream;
-import java.util.Date;
 import java.util.List;
-import java.util.SimpleTimeZone;
 
 /**
  * Created by May on 4/4/2018.
@@ -80,7 +78,7 @@ public class ModelFirebase {
 
     public void getImage(final String name, final Model.GetImageListener listener) {
 
-        final long ONE_MEGABYTE = 1024 * 1024;
+        final long ONE_MEGABYTE = 1024 * 1024 * 5;
         imagesStorage.child(name).getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
             @Override
             public void onSuccess(final byte[] bytes) {
@@ -117,54 +115,52 @@ public class ModelFirebase {
     }
 
     private void syncUsers() {
-        final long lastUpdateDate =0;
-//                getLastUpdateDate(USERS_LAST_UPDATE_DATE);
+        final long lastUpdateDate = getLastUpdateDate(USERS_LAST_UPDATE_DATE);
 
-        // Get all users from firebase
-        users.getAllUsers(new ModelFirebase.GetDataListener<List<User>>() {
+        // Get all users from firebase by the last update date
+        users.getAllUsers(lastUpdateDate, new ModelFirebase.GetDataListener<List<User>>() {
             @Override
-            public void onComplete(List<User> data) {
-                if (data != null && data.size() > 0) {
+            public void onComplete(List<User> users) {
+                if (users != null && users.size() > 0) {
 
                     // Update all the outdated users in the local db
-                    for (final User user : data) {
-                        if (user.getLastUpdated() >= lastUpdateDate) {
-                            AsyncTask.execute(new Runnable() {
-                                @Override
-                                public void run() {
-                                    AppDatabase.db.userDao().insertAll(user);
-                                }
-                            });
+                    long recentUpdate = lastUpdateDate;
+                    for (final User user : users) {
+
+                        UserAsyncDao.update(user);
+
+                        if (user.getLastUpdated() > recentUpdate) {
+                            recentUpdate = user.getLastUpdated();
                         }
+                        Log.d("TAG", "own user: " + UserRepository.getCurrentUserId() + ".. updating user: " + user.getId().toString());
                     }
-                    updateLastUpdateDate(USERS_LAST_UPDATE_DATE);
+                    updateLastUpdateDate(USERS_LAST_UPDATE_DATE, recentUpdate);
                 }
             }
         });
     }
 
     private void syncWorkshops() {
-        final long lastUpdateDate = 0;
-//                getLastUpdateDate(WORKSHOPS_LAST_UPDATE_DATE);
+        final long lastUpdateDate = getLastUpdateDate(WORKSHOPS_LAST_UPDATE_DATE);
 
-        // Get all workshops from firebase
-        workshops.getAllWorkshops(new ModelFirebase.GetDataListener<List<Workshop>>() {
+        // Get all workshops from firebase by the last update date
+        workshops.getAllWorkshops(lastUpdateDate, new ModelFirebase.GetDataListener<List<Workshop>>() {
             @Override
-            public void onComplete(List<Workshop> data) {
-                if (data != null && data.size() > 0) {
+            public void onComplete(List<Workshop> workshops) {
+                if (workshops != null && workshops.size() > 0) {
 
                     // Update all the outdated workshops in the local db
-                    for (final Workshop workshop : data) {
-                        if (workshop.getLastUpdated() >= lastUpdateDate) {
-                            AsyncTask.execute(new Runnable() {
-                                @Override
-                                public void run() {
-                                    AppDatabase.db.workshopDao().insertAll(workshop);
-                                }
-                            });
+                    long recentUpdate = lastUpdateDate;
+                    for (final Workshop w : workshops) {
+
+                        WorkshopAsyncDao.update(w);
+
+                        if (w.getLastUpdated() > recentUpdate) {
+                            recentUpdate = w.getLastUpdated();
                         }
+                        Log.d("TAG", "own user: " + UserRepository.getCurrentUserId() + ".. updating workshop: " + w.getId().toString());
                     }
-                    updateLastUpdateDate(WORKSHOPS_LAST_UPDATE_DATE);
+                    updateLastUpdateDate(WORKSHOPS_LAST_UPDATE_DATE, recentUpdate);
                 }
             }
         });
@@ -174,9 +170,10 @@ public class ModelFirebase {
         return MyApp.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong(WORKSHOPS_LAST_UPDATE_DATE, 0);
     }
 
-    private void updateLastUpdateDate(String field) {
+    private void updateLastUpdateDate(String field, long date) {
         SharedPreferences.Editor editor = MyApp.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
-        editor.putLong(field, new Date().getTime());
+//        editor.putLong(field, new Date().getTime());
+        editor.putLong(field, date);
         editor.commit();
     }
 }

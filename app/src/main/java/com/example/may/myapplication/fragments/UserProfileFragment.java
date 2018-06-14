@@ -55,24 +55,25 @@ public class UserProfileFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
 
         userId = getArguments().getString("userId");
-        readOnly = getArguments().getBoolean("readOnly");
 
         userViewModel = ViewModelProviders.of(this).get(UserViewModel.class);
         userViewModel.init(userId);
 
         final LifecycleOwner owner = this;
 
+        // Observe the user in order to update the ui inputs
         userViewModel.getUser().observe(owner, new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
                 updateUI(user);
+            }
+        });
 
-                userViewModel.getImage(user.getImageUrl(), user.getId()).observe(owner, new Observer<Bitmap>() {
-                    @Override
-                    public void onChanged(@Nullable Bitmap bitmap) {
-                        if (bitmap != null) userPhoto.setImageBitmap(bitmap);
-                    }
-                });
+        // Observe the user image in order to update the image input
+        userViewModel.getImage(userId).observe(owner, new Observer<Bitmap>() {
+            @Override
+            public void onChanged(@Nullable Bitmap bitmap) {
+                if (bitmap != null) userPhoto.setImageBitmap(bitmap);
             }
         });
     }
@@ -136,6 +137,8 @@ public class UserProfileFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        readOnly = getArguments().getBoolean("readOnly");
+
         // Init input fields
         initInputs();
 
@@ -159,15 +162,20 @@ public class UserProfileFragment extends Fragment {
         progressBarSaveProfile = getView().findViewById(R.id.progressBarSaveProfile);
         progressBarSaveProfile.setVisibility(View.INVISIBLE);
 
-        if (readOnly) setViewAsReadOnly();
+        if (readOnly) setViewAsReadOnly(nameInput, phoneInput, instegramLinkInput, facebookLinkInput);
     }
 
-    private void setViewAsReadOnly() {
-        nameInput.setKeyListener(null);
-        phoneInput.setKeyListener(null);
-        instegramLinkInput.setKeyListener(null);
-        facebookLinkInput.setKeyListener(null);
+    private void setViewAsReadOnly(EditText... inputs) {
 
+        // Set all input fields as read only-
+        // Disable edit
+        // Enable select
+        for (EditText input : inputs) {
+            input.setKeyListener(null);
+            input.setTextIsSelectable(true);
+        }
+
+        // Hide buttons like save and edit
         btnSaveProfile.setVisibility(View.INVISIBLE);
         btnEditImage.setVisibility(View.INVISIBLE);
     }

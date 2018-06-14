@@ -59,4 +59,17 @@
         app:layout_constraintStart_toEndOf="@+id/teacher"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <TextView
+        android:id="@+id/registered_indication"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/colorAccent"
+        android:text="רשום"
+        android:textAlignment="center"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 </android.support.constraint.ConstraintLayout>

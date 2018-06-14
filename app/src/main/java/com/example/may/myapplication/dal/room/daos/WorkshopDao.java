@@ -24,20 +24,18 @@ public interface WorkshopDao {
 //            + "INNER JOIN User ON Workshop.teacherId = User.id ")
 //    LiveData<List<Workshop>> getAll();
 
-    @Query("SELECT id, date FROM Workshop")
+    @Query("SELECT id, startTime FROM Workshop")
     LiveData<List<WorkshopMini>> getAllForCalendar();
 
-    @Query("SELECT * FROM Workshop WHERE id LIKE :id LIMIT 1")
-    LiveData<Workshop> findById(String id);
+    @Query("SELECT Workshop.*, User.name as teacherName FROM Workshop "
+            + "INNER JOIN User ON Workshop.teacherId = User.id ")
+    List<Workshop> getAll();
 
     @Query("SELECT Workshop.*, User.name as teacherName, User.imageUrl as teacherImageUrl FROM Workshop "
             + "INNER JOIN User ON Workshop.teacherId = User.id "
             + "WHERE Workshop.id IN (:ids)"
-            + "ORDER BY Workshop.date ASC")
+            + "ORDER BY Workshop.startTime ASC")
     LiveData<List<Workshop>> findByIds(List<String> ids);
-
-    @Query("SELECT * FROM Workshop")
-    List<Workshop> findAll();
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAll(Workshop... workshops);
@@ -45,14 +43,17 @@ public interface WorkshopDao {
     @Query("SELECT Workshop.*, User.name as teacherName, User.imageUrl as teacherImageUrl FROM Workshop "
             + "INNER JOIN User ON Workshop.teacherId = User.id "
             + "WHERE Workshop.id=:id")
-    LiveData<Workshop> getFullWorkshop(String id);
+    LiveData<Workshop> get(String id);
 
-    @Delete
-    void delete(Workshop workshop);
+    @Query("DELETE FROM Workshop WHERE id LIKE :workshopId")
+    void delete(String workshopId);
+
+    @Query("DELETE FROM Workshop")
+    void deleteAll();
 
     class WorkshopMini {
         String id;
-        long date;
+        long startTime;
 
         public String getId() {
             return id;
@@ -62,12 +63,12 @@ public interface WorkshopDao {
             this.id = id;
         }
 
-        public long getDate() {
-            return date;
+        public long getStartTime() {
+            return startTime;
         }
 
-        public void setDate(long date) {
-            this.date = date;
+        public void setStartTime(long startTime) {
+            this.startTime = startTime;
         }
     }
 }

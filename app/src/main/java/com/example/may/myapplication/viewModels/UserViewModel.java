@@ -28,8 +28,8 @@ public class UserViewModel extends ViewModel{
         user = UserRepository.getUser(userId);
     }
 
-    public LiveData<Bitmap> getImage(String url, String userId) {
-        return UserRepository.instance.getUserImage(url, userId);
+    public LiveData<Bitmap> getImage(String userId) {
+        return UserRepository.instance.getUserImage(userId);
     }
 
     public LiveData<User> getUser() {

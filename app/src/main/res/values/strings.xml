@@ -3,11 +3,14 @@
     <string name="add_workshop">צור סדנא</string>
     <string name="dateInput">תאריך</string>
     <string name="hourInput">שעה</string>
+    <string name="startTimeInput">שעת התחלה</string>
+    <string name="endTimeInput">שעת סיום</string>
     <string name="classLevelInput">רמת קושי</string>
     <string name="classGenreInput">סגנון</string>
     <string name="placeInput">מיקום</string>
     <string name="maxParticipantInput">מספר מקומות</string>
     <string name="userId">תעודת זהות</string>
+    <string name="password">סיסמא</string>
     <string name="profile">פרופיל</string>
     <string name="favorites">מועדפים</string>
     <string name="logout">התנתק</string>
@@ -27,6 +30,9 @@
     <string name="alert_workshopSaved">הסדנא נשמרה בהצלחה</string>
     <string name="notification_userGotPlaceInWorkshop_title">איזה כיף לך!</string>
     <string name="notification_userGotPlaceInWorkshop_content">התפנה לך מקום בסדנא:)</string>
+    <string name="authFailed">ההתחברות נכשלה</string>
+    <string name="noWorkshopsForDate">אין סדנאות מתוכננות ליום זה</string>
+    <string name="form_invalidTimes">זמן סיום אינו תקין</string>
     <string-array name="class_levels">
         <item>רמת קושי</item>
         <item>מתחילים</item>

@@ -3,6 +3,7 @@ package com.example.may.myapplication.repositories;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.graphics.Bitmap;
+import android.util.Log;
 
 import com.example.may.myapplication.MyApp;
 import com.example.may.myapplication.dal.Model;
@@ -29,15 +30,23 @@ public class UserRepository {
         return AppDatabase.db.userDao().findById(userId);
     }
 
-    // TODO - imageUrl is needed?
-    public LiveData<Bitmap> getUserImage(String imageUrl, final String userId) {
+    /**
+     * Returns the user's image from the local storage.
+     * At the same time, get the image from firebase storage and check if we
+     * need to update the local storage
+     * @param userId
+     * @return
+     */
+    public LiveData<Bitmap> getUserImage(final String userId) {
 
         final MutableLiveData<Bitmap> result = new MutableLiveData<>();
 
+        // Get the image from firebase storage
         Model.instance().getImage("image-" + userId, new Model.GetImageListener() {
             @Override
             public void onSuccess(Bitmap bitmap, long lastUpdated) {
 
+                // Get the image file from local storage
                 File file = new File(MyApp.context.getFilesDir(), "image-" + userId);
 
                 // Check if the file saved in the internal storage needs an update
@@ -49,11 +58,11 @@ public class UserRepository {
 
             @Override
             public void onFail() {
-
-                //  TODO : alert
+                Log.d("TAG", "fail to get image for " + userId);
             }
         });
 
+        // Read the image from local storage
         result.setValue(ImageHelper.readImageFromLocalStorage("image-" + userId));
         return result;
     }

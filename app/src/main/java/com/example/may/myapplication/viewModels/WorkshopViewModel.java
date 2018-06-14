@@ -31,7 +31,7 @@ public class WorkshopViewModel extends ViewModel{
         return this.workshop;
     }
 
-    public LiveData<Bitmap> getTeacherImage(String url, String userId) {
-        return UserRepository.instance.getUserImage(url, userId);
+    public LiveData<Bitmap> getTeacherImage(String userId) {
+        return UserRepository.instance.getUserImage(userId);
     }
 }

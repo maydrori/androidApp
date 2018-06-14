@@ -4,25 +4,22 @@ import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.may.myapplication.R;
 import com.example.may.myapplication.activities.ViewWorkshop;
 import com.example.may.myapplication.adapters.WorkshopListViewAdapter;
-import com.example.may.myapplication.dal.room.AppDatabase;
 import com.example.may.myapplication.dal.room.daos.WorkshopDao;
-import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
 import com.example.may.myapplication.utils.DateFormatter;
 import com.example.may.myapplication.viewModels.CalendarViewModel;
@@ -42,17 +39,17 @@ public class WorkshopsCalendarFragment extends Fragment {
     ListView listViewWorkshops;
     CompactCalendarView compactCalendar;
     TextView calanderDateTextView;
-    List<Workshop> currentWorkshops;
+    List<Workshop> workshopListAdapterData;
     WorkshopListViewAdapter workshopsAdapter;
     Date currentDate;
 
     CalendarViewModel viewModel;
+    ProgressBar progressBarFinishLoading;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-
          return inflater.inflate(R.layout.workshops_calendar_view, container, false);
     }
 
@@ -60,14 +57,18 @@ public class WorkshopsCalendarFragment extends Fragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        progressBarFinishLoading = getView().findViewById(R.id.progressBarFinishLoading);
+        progressBarFinishLoading.setVisibility(View.VISIBLE);
+
         currentDate = new Date();
-        currentWorkshops = new ArrayList<>();
+        workshopListAdapterData = new ArrayList<>();
 
         viewModel = ViewModelProviders.of(this).get(CalendarViewModel.class);
 
         viewModel.getWorkshopsForCalendar().observe(this, new Observer<List<WorkshopDao.WorkshopMini>>() {
             @Override
             public void onChanged(@Nullable List<WorkshopDao.WorkshopMini> workshops) {
+                progressBarFinishLoading.setVisibility(View.INVISIBLE);
                 loadEventsToCalendar(workshops);
             }
         });
@@ -80,28 +81,39 @@ public class WorkshopsCalendarFragment extends Fragment {
 
         List<Event> events = compactCalendar.getEvents(currentDate);
 
+        if (events.size() == 0) {
+            refreshListNoWorkshops();
+        }
+        else refershListWithWorkshops(events);
+    }
+
+    private void refreshListNoWorkshops () {
+
+        // Alert the user
+        String noWorkshopsMsg = this.getResources().getString(R.string.noWorkshopsForDate);
+        Toast.makeText(getActivity().getApplicationContext(), noWorkshopsMsg, Toast.LENGTH_SHORT).show();
+
+        workshopListAdapterData.clear();
+        workshopsAdapter.notifyDataSetChanged();
+    }
+
+    private void refershListWithWorkshops (List<Event> events) {
+
+        // Get the workshops ids
         List<String> wokshopsIds = new ArrayList<>();
         for (Event event : events) {
             wokshopsIds.add((String) event.getData());
         }
 
-        if (events.size() == 0) {
-            Toast.makeText(getActivity().getApplicationContext(), "אין סדנאות מתוכננות ליום זה", Toast.LENGTH_SHORT).show();
-            currentWorkshops.clear();
+        viewModel.getWorkshopsByIds(wokshopsIds).observe(this, new Observer<List<Workshop>>() {
+            @Override
+            public void onChanged(@Nullable List<Workshop> workshops) {
+
+            workshopListAdapterData.clear();
+            workshopListAdapterData.addAll(workshops);
             workshopsAdapter.notifyDataSetChanged();
-        }
-        else {
-
-            viewModel.getWorkshopsByIds(wokshopsIds).observe(this, new Observer<List<Workshop>>() {
-                @Override
-                public void onChanged(@Nullable List<Workshop> workshops) {
-
-                    currentWorkshops.clear();
-                    currentWorkshops.addAll(workshops);
-                    workshopsAdapter.notifyDataSetChanged();
-                }
-            });
-        }
+            }
+        });
     }
 
     private void loadEventsToCalendar(List<WorkshopDao.WorkshopMini> workshops) {
@@ -109,7 +121,7 @@ public class WorkshopsCalendarFragment extends Fragment {
         compactCalendar.removeAllEvents();
         List<Event> events = new ArrayList<Event>();
         for (WorkshopDao.WorkshopMini workshop : workshops) {
-            events.add(new Event(Color.BLUE, workshop.getDate(), workshop.getId()));
+            events.add(new Event(Color.BLUE, workshop.getStartTime(), workshop.getId()));
         }
         compactCalendar.addEvents(events);
 
@@ -126,7 +138,7 @@ public class WorkshopsCalendarFragment extends Fragment {
 
         calanderDateTextView.setText(DateFormatter.toMonthFormat(compactCalendar.getFirstDayOfCurrentMonth()));
 
-        workshopsAdapter = new WorkshopListViewAdapter(getActivity(),this, viewModel, R.layout.listview_workshops, currentWorkshops);
+        workshopsAdapter = new WorkshopListViewAdapter(getActivity(),this, viewModel, R.layout.listview_workshops, workshopListAdapterData);
         listViewWorkshops.setAdapter(workshopsAdapter);
     }
 
@@ -153,7 +165,7 @@ public class WorkshopsCalendarFragment extends Fragment {
         listViewWorkshops.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                Workshop workshop = currentWorkshops.get(position);
+                Workshop workshop = workshopListAdapterData.get(position);
 
                 Intent intent = new Intent(getContext(), ViewWorkshop.class)
                         .putExtra("workshopId", workshop.getId());

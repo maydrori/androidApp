@@ -8,9 +8,4 @@
         android:title="@string/edit"
         app:showAsAction="ifRoom"
         />
-    <item
-        android:id="@+id/action_view_participants"
-        android:title="@string/participantsList"
-        app:showAsAction="never">
-    </item>
 </menu>

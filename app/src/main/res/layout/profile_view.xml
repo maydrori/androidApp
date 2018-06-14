@@ -87,6 +87,7 @@
             android:layout_height="wrap_content"
             android:focusedByDefault="false"
             android:hint="@string/instegramLink"
+            android:autoLink="web"
             android:inputType="textUri" />
 
     </android.support.design.widget.TextInputLayout>
@@ -108,6 +109,7 @@
             android:layout_height="wrap_content"
             android:focusedByDefault="false"
             android:hint="@string/facebookLink"
+            android:autoLink="web"
             android:inputType="textUri" />
 
     </android.support.design.widget.TextInputLayout>

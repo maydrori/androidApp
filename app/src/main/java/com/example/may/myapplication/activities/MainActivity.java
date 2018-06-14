@@ -84,23 +84,26 @@ public class MainActivity extends AppCompatActivity  {
         userViewModel.getUser().observe(owner, new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
-                navUserName.setText(user.getName());
-
-                userViewModel.getImage(user.getImageUrl(), user.getId()).observe(owner, new Observer<Bitmap>() {
-                    @Override
-                    public void onChanged(@Nullable Bitmap bitmap) {
-                        if (bitmap != null) navUserImage.setImageBitmap(bitmap);
-                    }
-                });
+                if (user != null) {
+                    navUserName.setText(user.getName());
+                }
             }
         });
+
+        userViewModel.getImage(UserRepository.getCurrentUserId()).observe(owner, new Observer<Bitmap>() {
+            @Override
+            public void onChanged(@Nullable Bitmap bitmap) {
+                if (bitmap != null) navUserImage.setImageBitmap(bitmap);
+            }
+        });
+
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Model.instance().syncRemoteData();
+//        Model.instance().syncRemoteData();
 
         setContentView(R.layout.activity_main);
         initViews();

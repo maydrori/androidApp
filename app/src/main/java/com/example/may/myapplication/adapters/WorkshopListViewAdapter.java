@@ -17,6 +17,7 @@ import com.example.may.myapplication.dal.Model;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
 import com.example.may.myapplication.dal.firebase.ModelFirebase;
+import com.example.may.myapplication.repositories.UserRepository;
 import com.example.may.myapplication.utils.ImageHelper;
 import com.example.may.myapplication.viewModels.CalendarViewModel;
 
@@ -60,7 +61,11 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
             TextView teacherTextView = (TextView) view.findViewById(R.id.teacher);
             TextView placeTextView = (TextView) view.findViewById(R.id.place);
 
-            hourTextView.setText(dateFormatForHour.format(workshop.getDate()));
+            boolean isRegistred = workshop.getRegisteredMembers().contains(UserRepository.getCurrentUserId());
+            TextView registerIndicationView = (TextView) view.findViewById(R.id.registered_indication);
+            registerIndicationView.setVisibility((isRegistred) ? View.VISIBLE : View.INVISIBLE);
+
+            hourTextView.setText(dateFormatForHour.format(workshop.getStartTime()));
             placeTextView.setText(workshop.getPlace());
             teacherTextView.setText(workshop.getTeacherName());
 
@@ -76,7 +81,7 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
 
         teacherPhoto.setTag(workshop.getTeacherId());
 
-        viewModel.getImage(workshop.getTeacherImageUrl(), workshop.getTeacherId()).observe(owner, new Observer<Bitmap>() {
+        viewModel.getImage(workshop.getTeacherId()).observe(owner, new Observer<Bitmap>() {
             @Override
             public void onChanged(@Nullable Bitmap bitmap) {
                 if (teacherPhoto.getTag().equals(workshop.getTeacherId())) {

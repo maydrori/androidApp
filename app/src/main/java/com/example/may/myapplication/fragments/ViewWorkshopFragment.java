@@ -78,12 +78,6 @@ public class ViewWorkshopFragment extends Fragment {
                 addWorkshopFragment.show(getActivity().getSupportFragmentManager(), "Add workshop Fragment");
 
                 return true;
-
-            case R.id.action_view_participants:
-                // User chose the "Favorite" action, mark the current item
-                // as a favorite...
-                return true;
-
             default:
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
@@ -118,21 +112,24 @@ public class ViewWorkshopFragment extends Fragment {
         workshopViewModel.getWorkshop().observe(owner, new Observer<Workshop>() {
             @Override
             public void onChanged(@Nullable Workshop w) {
-                workshop = w;
-                isMyWorkshop = workshop.getTeacherId().equals(UserRepository.getCurrentUserId());
-                setHasOptionsMenu(isMyWorkshop);
-                updateUI();
+                if (w != null) {
+                    workshop = w;
+                    isMyWorkshop = workshop.getTeacherId().equals(UserRepository.getCurrentUserId());
+                    setHasOptionsMenu(isMyWorkshop);
+                    updateUI();
 
-                teacherPhoto.setImageResource(R.drawable.ic_person);
-                workshopViewModel.getTeacherImage(w.getTeacherImageUrl(), w.getTeacherId()).observe(owner, new Observer<Bitmap>() {
-                    @Override
-                    public void onChanged(@Nullable Bitmap bitmap) {
+                    teacherPhoto.setImageResource(R.drawable.ic_person);
+                    workshopViewModel.getTeacherImage(w.getTeacherId()).observe(owner, new Observer<Bitmap>() {
+                        @Override
+                        public void onChanged(@Nullable Bitmap bitmap) {
 
-                        if (progressBarFinishLoading.getVisibility() == View.VISIBLE) progressBarFinishLoading.setVisibility(View.INVISIBLE);
+                            if (progressBarFinishLoading.getVisibility() == View.VISIBLE)
+                                progressBarFinishLoading.setVisibility(View.INVISIBLE);
 
-                        if (bitmap != null) teacherPhoto.setImageBitmap(bitmap);
-                    }
-                });
+                            if (bitmap != null) teacherPhoto.setImageBitmap(bitmap);
+                        }
+                    });
+                }
             }
         });
     }
@@ -187,8 +184,8 @@ public class ViewWorkshopFragment extends Fragment {
         genre.setText(workshop.getGenre());
         place.setText(workshop.getPlace());
         level.setText(workshop.getLevel());
-        date.setText(DateFormatter.toDateFormat(workshop.getDate()));
-        time.setText(DateFormatter.toTimeFormat(workshop.getDate()));
+        date.setText(DateFormatter.toDateFormat(workshop.getStartTime()));
+        time.setText(DateFormatter.toTimeFormat(workshop.getStartTime()) + " - " + DateFormatter.toTimeFormat(workshop.getEndTime()));
         teacherName.setText(workshop.getTeacherName());
     }
 
@@ -227,16 +224,17 @@ public class ViewWorkshopFragment extends Fragment {
         getView().findViewById(R.id.btn_waitinglist).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Model.instance().enterWaitingList(workshopId, userId, new WorkshopsFirebase.LeaveWaitingListListener() {
-                    @Override
-                    public void onLeave() {
-
-                        Intent intent = new Intent(getContext(), ViewWorkshop.class)
-                                .putExtra("workshopId", workshopId);
-
-                        NotificationsHelper.send(getContext(), intent, R.string.notification_userGotPlaceInWorkshop_title, R.string.notification_userGotPlaceInWorkshop_content);
-                    }
-                });
+                Model.instance().enterWaitingList(workshopId, userId);
+//                        new WorkshopsFirebase.LeaveWaitingListListener() {
+//                    @Override
+//                    public void onLeave() {
+//
+//                        Intent intent = new Intent(getContext(), ViewWorkshop.class)
+//                                .putExtra("workshopId", workshopId);
+//
+//                        NotificationsHelper.send(getContext(), intent, R.string.notification_userGotPlaceInWorkshop_title, R.string.notification_userGotPlaceInWorkshop_content);
+//                    }
+//                });
             }
         });
 
@@ -251,7 +249,7 @@ public class ViewWorkshopFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 Model.instance().deleteWorkshop(workshopId);
-                getActivity().getSupportFragmentManager().popBackStack();
+                getActivity().finish();
             }
         });
 

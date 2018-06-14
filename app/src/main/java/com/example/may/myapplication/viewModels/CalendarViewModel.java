@@ -24,11 +24,14 @@ public class CalendarViewModel extends ViewModel {
     private LiveData<List<WorkshopDao.WorkshopMini>> calendarWorkshops;
 
     public CalendarViewModel () {
+        if (this.calendarWorkshops != null) {
+            return;
+        }
         calendarWorkshops = WorkshopsRepository.instance.getAllWorkshopsForCalendar();
     }
 
-    public LiveData<Bitmap> getImage(String url, String userId) {
-        return UserRepository.instance.getUserImage(url, userId);
+    public LiveData<Bitmap> getImage(String userId) {
+        return UserRepository.instance.getUserImage(userId);
     }
 
     public LiveData<List<WorkshopDao.WorkshopMini>> getWorkshopsForCalendar() {

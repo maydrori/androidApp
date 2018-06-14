@@ -5,10 +5,13 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +22,7 @@ import java.util.Map;
 public class WorkshopsFirebase {
 
     DatabaseReference ref;
+    ValueEventListener eventListener;
 
     public WorkshopsFirebase(DatabaseReference ref) {
         this.ref = ref;
@@ -33,7 +37,10 @@ public class WorkshopsFirebase {
         ref.child(w.getId()).setValue(w);
     }
 
-    public void deleteWorkshop(String workshopId) { ref.child(workshopId).removeValue(); }
+    public void deleteWorkshop(String workshopId) {
+        ref.child(workshopId).child("isDeleted").setValue(true);
+        updateLastUpdateDate(workshopId);
+    }
 
     public void getWorkshopById(String workshopId, final ModelFirebase.GetDataListener listener) {
 
@@ -53,10 +60,11 @@ public class WorkshopsFirebase {
         });
     }
 
-    public void getAllWorkshops(final ModelFirebase.GetDataListener listener) {
+    public void getAllWorkshops(long lastUpdateDate, final ModelFirebase.GetDataListener listener) {
 
         // Getting updates
-        ref.addValueEventListener(new ValueEventListener() {
+        Query query = ref.orderByChild("lastUpdated").startAt(lastUpdateDate);
+        eventListener = query.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
@@ -91,59 +99,37 @@ public class WorkshopsFirebase {
     public void unregisterMemberFromWorkshop(final String workshopId, String userId) {
         ref.child(workshopId).child("registered").child(userId).removeValue();
         updateLastUpdateDate(workshopId);
+
+        handleWaitingList(workshopId);
     }
 
-    public interface LeaveWaitingListListener {
-        public void onLeave();
-    }
+    private void handleWaitingList(final String workshopId) {
 
-    public void enterWaitingList(final String workshopId, final String userId, final LeaveWaitingListListener listener) {
-        ref.child(workshopId).child("waitingList").child(userId).setValue(userId);
-        updateLastUpdateDate(workshopId);
-
-        // Listen to the registered members.
-        // When 'onChildRemoved' it means a member left the workshop,
-        // so now the one who enter the waiting list, can register.
-        ref.child(workshopId).child("registered").addChildEventListener(new ChildEventListener() {
+        // Register the first student waiting in the waiting list for this workshop
+        ref.child(workshopId).child("waitingList").limitToFirst(1).addValueEventListener(new ValueEventListener() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-            }
+            public void onDataChange(DataSnapshot dataSnapshot) {
 
-            @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-            }
+                Iterator<DataSnapshot> it = dataSnapshot.getChildren().iterator();
 
-            @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                if (it.hasNext()) {
+                    String firstUserWaiting = it.next().getKey();
 
-                ref.child(workshopId).child("waitingList").limitToFirst(1).addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        String firstUserWaiting = dataSnapshot.getChildren().iterator().next().getKey();
-
-                        if (firstUserWaiting.equals(userId)) {
-                            registerMemberToWorkshop(workshopId, userId);
-                            leaveWaitingList(workshopId, userId);
-                            listener.onLeave();
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
-            }
-
-            @Override
-            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                    leaveWaitingList(workshopId, firstUserWaiting);
+                    registerMemberToWorkshop(workshopId, firstUserWaiting);
+                }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+
             }
         });
+    }
 
+    public void enterWaitingList(final String workshopId, final String userId) {
+        ref.child(workshopId).child("waitingList").child(userId).setValue(userId);
+        updateLastUpdateDate(workshopId);
     }
 
     public void leaveWaitingList(String workshopId, String userId) {

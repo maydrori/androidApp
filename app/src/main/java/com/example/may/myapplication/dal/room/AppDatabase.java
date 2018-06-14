@@ -16,7 +16,7 @@ import com.example.may.myapplication.models.Workshop;
  * Created by May on 4/18/2018.
  */
 
-@Database(entities = {User.class, Workshop.class}, version = 6)
+@Database(entities = {User.class, Workshop.class}, version = 8)
 @TypeConverters({StringArrayConverter.class})
 public abstract class AppDatabase extends RoomDatabase {
     public abstract UserDao userDao();

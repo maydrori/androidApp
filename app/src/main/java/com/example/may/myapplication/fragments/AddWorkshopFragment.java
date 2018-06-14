@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -33,7 +34,8 @@ public class AddWorkshopFragment extends DialogFragment {
     EditText placeInput;
     EditText maxParticipantsInput;
     EditText dateInput;
-    EditText timeInput;
+    EditText startTimeInput;
+    EditText endTimeInput;
     Spinner genreInput;
     Spinner levelInput;
 
@@ -72,30 +74,78 @@ public class AddWorkshopFragment extends DialogFragment {
             @Override
             public void onClick(View v) {
 
-            long date = DateFormatter.fullStringToDate(dateInput.getText().toString() + " " + timeInput.getText().toString()).getTime();
-            Spinner genreSpinner = (Spinner)  getDialog().findViewById(R.id.genreSpinner);
-            String genre = genreSpinner.getSelectedItem().toString();
-            Spinner levelSpinner = (Spinner)  getDialog().findViewById(R.id.levelSpinner);
-            String level = levelSpinner.getSelectedItem().toString();
-            String place = placeInput.getText().toString();
-            int maxParticipants = Integer.parseInt(maxParticipantsInput.getText().toString());
+                if (validateEmptyFields()) {
 
-            String workshopId = (workshop != null) ? workshop.getId() : Model.instance().getNextWorkshopId();
-            Workshop workshopToSave = new Workshop(workshopId, date, UserRepository.getCurrentUserId(), place, genre, level, maxParticipants);
-            Model.instance().saveWorkshop(workshopToSave);
+                    // Convert times from text to long
+                    long startTime = DateFormatter.fullStringToDate(dateInput.getText().toString() + " " + startTimeInput.getText().toString()).getTime();
+                    long endTime = DateFormatter.fullStringToDate(dateInput.getText().toString() + " " + endTimeInput.getText().toString()).getTime();
 
-            Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.alert_workshopSaved), Toast.LENGTH_SHORT).show();
+                    // Validate time range
+                    if (validateTimeRange(startTime, endTime)) {
 
-            getDialog().dismiss();
+                        String genre = genreInput.getSelectedItem().toString();
+                        String level = levelInput.getSelectedItem().toString();
+                        String place = placeInput.getText().toString();
+                        int maxParticipants = Integer.parseInt(maxParticipantsInput.getText().toString());
+
+                        String workshopId = (workshop != null) ? workshop.getId() : Model.instance().getNextWorkshopId();
+                        Workshop workshopToSave = new Workshop(workshopId, startTime, endTime, UserRepository.getCurrentUserId(), place, genre, level, maxParticipants);
+                        Model.instance().saveWorkshop(workshopToSave);
+
+                        Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.alert_workshopSaved), Toast.LENGTH_SHORT).show();
+
+                        getDialog().dismiss();
+                    }
+                }
             }
         });
+    }
+
+    private boolean validateEmptyFields() {
+
+        // Validate empty fields and spinners
+        return (validateEmptyTextFields(dateInput, startTimeInput, endTimeInput, placeInput, maxParticipantsInput) &&
+            validateEmptySpinner((TextView)genreInput.getSelectedView(), "סגנון") &&
+            validateEmptySpinner((TextView)levelInput.getSelectedView(), "רמת קושי"));
+    }
+
+    private boolean validateEmptySpinner(TextView input, String defaultVal) {
+        if (input.getText().toString().equals(defaultVal)) {
+            input.setError("יש למלא שדה זה");
+            return false;
+        }
+        else input.setError(null);
+
+        return true;
+    }
+
+    private boolean validateTimeRange(long startTime, long endTime) {
+        if (endTime < startTime) {
+            endTimeInput.setError(getResources().getString(R.string.form_invalidTimes));
+            return false;
+        }
+        else endTimeInput.setError(null);
+        return true;
+    }
+
+    private boolean validateEmptyTextFields(TextView... inputs) {
+        for (TextView input : inputs) {
+            if (input.getText().toString().isEmpty()) {
+                input.setError("יש למלא שדה זה");
+                return false;
+            }
+            else input.setError(null);
+        }
+
+        return true;
     }
 
     private void setInputsByWorkshop() {
         placeInput.setText(workshop.getPlace());
         maxParticipantsInput.setText(String.valueOf(workshop.getMaxParticipants()));
-        dateInput.setText(DateFormatter.toDateFormat(workshop.getDate()));
-        timeInput.setText(DateFormatter.toTimeFormat(workshop.getDate()));
+        dateInput.setText(DateFormatter.toDateFormat(workshop.getStartTime()));
+        startTimeInput.setText(DateFormatter.toTimeFormat(workshop.getStartTime()));
+        endTimeInput.setText(DateFormatter.toTimeFormat(workshop.getEndTime()));
         genreInput.setSelection(((ArrayAdapter<CharSequence>)genreInput.getAdapter()).getPosition(workshop.getGenre()));
         levelInput.setSelection(((ArrayAdapter<CharSequence>)levelInput.getAdapter()).getPosition(workshop.getLevel()));
     }
@@ -105,21 +155,23 @@ public class AddWorkshopFragment extends DialogFragment {
         placeInput = ((EditText)getDialog().findViewById(R.id.place));
         maxParticipantsInput = (EditText)getDialog().findViewById(R.id.maxParticipants);
         dateInput = (EditText)getDialog().findViewById(R.id.date);
-        timeInput = (EditText)getDialog().findViewById(R.id.time);
+        startTimeInput = (EditText)getDialog().findViewById(R.id.startTime);
+        endTimeInput = (EditText)getDialog().findViewById(R.id.endTime);
         genreInput = (Spinner) getDialog().findViewById(R.id.genreSpinner);
         levelInput = (Spinner) getDialog().findViewById(R.id.levelSpinner);
 
         initSpinner(genreInput, R.array.class_genres);
         initSpinner(levelInput, R.array.class_levels);
-        initDatePicker();
-        initTimePicker();
+        initDatePicker(dateInput);
+        initTimePicker(startTimeInput);
+        initTimePicker(endTimeInput);
 
         if (workshop != null) setInputsByWorkshop();
 
         handleSave();
     }
 
-    private void initTimePicker() {
+    private void initTimePicker(final EditText timeInput) {
 
         final TimePickerDialog.OnTimeSetListener time = new TimePickerDialog.OnTimeSetListener() {
 
@@ -142,7 +194,7 @@ public class AddWorkshopFragment extends DialogFragment {
         });
     }
 
-    private void initDatePicker() {
+    private void initDatePicker(final EditText dateInput) {
 
         final DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
 

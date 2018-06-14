@@ -19,6 +19,7 @@ import com.example.may.myapplication.dal.Model;
 import com.example.may.myapplication.dal.room.AppDatabase;
 import com.example.may.myapplication.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -59,8 +60,8 @@ public class LoginFragment extends Fragment {
         startActivity(i);
     }
 
-    private void createNewUser(String userEmail) {
-        mAuth.createUserWithEmailAndPassword(userEmail, "123565")
+    private void createNewUser(String userEmail, String password) {
+        mAuth.createUserWithEmailAndPassword(userEmail, password)
             .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
@@ -75,18 +76,28 @@ public class LoginFragment extends Fragment {
             });
     }
 
-    private void signIn(String userEmail) {
-        mAuth.signInWithEmailAndPassword(userEmail, "123565")
+    private void signIn(String userEmail, String password) {
+        mAuth.signInWithEmailAndPassword(userEmail, password)
                 .addOnCompleteListener(getActivity(), new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             goToMainActivity();
                         } else {
-                            Toast.makeText(getActivity(), "Authentication failed.", Toast.LENGTH_SHORT).show();
+                            authFailed();
                         }
                     }
-                });
+                }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                authFailed();
+            }
+        });
+    }
+
+    private void authFailed () {
+        String msg =  getContext().getResources().getString(R.string.authFailed);
+        Toast.makeText(getActivity(), msg, Toast.LENGTH_SHORT).show();
     }
 
     private void handleLoginButton() {
@@ -97,16 +108,22 @@ public class LoginFragment extends Fragment {
 
             // Save the user id in order to use it later
             EditText userIdInput = getView().findViewById(R.id.text_user_id);
+            EditText passwordInput = getView().findViewById(R.id.text_password);
             final String userEmail = userIdInput.getText().toString().trim();
+            final String userPassword = passwordInput.getText().toString().trim();
 
-            // If the user doesn't exist, the result will be empty array
-            mAuth.fetchSignInMethodsForEmail(userEmail).addOnCompleteListener(new OnCompleteListener<SignInMethodQueryResult>() {
-                @Override
-                public void onComplete(@NonNull Task<SignInMethodQueryResult> task) {
-                    if (task.getResult().getSignInMethods().isEmpty()) createNewUser(userEmail);
-                    else signIn(userEmail);
-                }
-            });
+            if (userEmail.isEmpty() || userPassword.isEmpty()) authFailed();
+            else {
+                // If the user doesn't exist, the result will be empty array
+                mAuth.fetchSignInMethodsForEmail(userEmail).addOnCompleteListener(new OnCompleteListener<SignInMethodQueryResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<SignInMethodQueryResult> task) {
+                        if (task.getResult().getSignInMethods().isEmpty())
+                            createNewUser(userEmail, userPassword);
+                        else signIn(userEmail, userPassword);
+                    }
+                });
+            }
             }
         });
     }

@@ -22,6 +22,65 @@ public class Model {
         return instance;
     }
 
+    Model () {
+        syncRemoteData();
+    }
+
+//    class WorkshopListData extends MutableLiveData<List<Workshop>> {
+//
+//        @Override
+//        protected void onActive() {
+//            super.onActive();
+//            // new thread tsks
+//            // 1. get the students list from the local DB
+//            WorkshopAsyncDao.getAll(new WorkshopAsyncDao.WorkshopAsynchDaoListener<List<Workshop>>() {
+//                @Override
+//                public void onComplete(List<Workshop> data) {
+//                    // 2. update the live data with the new student list
+//                    setValue(data);
+//                    Log.d("TAG","got students from local DB " + data.size());
+//
+//                    // 3. get the student list from firebase
+//                    modelFirebase.workshops.getAllWorkshops(new ModelFirebase.GetDataListener<List<Workshop>>() {
+//                        @Override
+//                        public void onComplete(List<Workshop> workshoplist) {
+//                            // 4. update the live data with the new student list
+//                            setValue(workshoplist);
+////                            Log.d("TAG","got students from firebase " + workshoplist.size());
+//
+//                            // 5. update the local DB
+//                            WorkshopAsyncDao.insertAll(workshoplist, new WorkshopAsyncDao.WorkshopAsynchDaoListener<Boolean>() {
+//                                @Override
+//                                public void onComplete(Boolean data) {
+//
+//                                }
+//                            });
+//                        }
+//                    });
+//                }
+//            });
+//        }
+//
+//        @Override
+//        protected void onInactive() {
+//            super.onInactive();
+//            modelFirebase.workshops.cancellGetAllStudents();
+//            Log.d("TAG","cancellGetAllStudents");
+//        }
+//
+//        public WorkshopListData() {
+//            super();
+//            //setValue(AppLocalDb.db.studentDao().getAll());
+//            setValue(new LinkedList<Workshop>());
+//        }
+//    }
+//
+//    WorkshopListData workshopListData = new WorkshopListData();
+
+//    public LiveData<List<Workshop>> getAllWorkshops(){
+//        return workshopListData;
+//    }
+
     public String getNextWorkshopId() {
         return modelFirebase.workshops.getNextWorkshopId();
     }
@@ -34,9 +93,9 @@ public class Model {
         modelFirebase.workshops.getWorkshopById(workshopId, listener);
     }
 
-    public void getAllWorkshops(ModelFirebase.GetDataListener listener) {
-        modelFirebase.workshops.getAllWorkshops(listener);
-    }
+//    public void getAllWorkshops(ModelFirebase.GetDataListener listener) {
+//        modelFirebase.workshops.getAllWorkshops(listener);
+//    }
 
     public void registerMemberToWorkshop(String workshopId, String userId) {
         modelFirebase.workshops.registerMemberToWorkshop(workshopId, userId);
@@ -50,8 +109,8 @@ public class Model {
         modelFirebase.workshops.leaveWaitingList(workshopId, userId);
     }
 
-    public void enterWaitingList(String workshopId, String userId, WorkshopsFirebase.LeaveWaitingListListener listener) {
-        modelFirebase.workshops.enterWaitingList(workshopId, userId, listener);
+    public void enterWaitingList(String workshopId, String userId) {
+        modelFirebase.workshops.enterWaitingList(workshopId, userId);
     }
 
     public void getUserById(String id, ModelFirebase.GetDataListener listener) {
@@ -63,7 +122,7 @@ public class Model {
         modelFirebase.users.saveUser(u);
     }
 
-    public void deleteWorkshop(String workshopId) {
+    public void deleteWorkshop(final String workshopId) {
         modelFirebase.workshops.deleteWorkshop(workshopId);
     }
 
@@ -77,11 +136,8 @@ public class Model {
         void onFail();
     }
 
-    // TODO
-    // Name need to be unique (with timestamp)
     public void saveImage(final Bitmap imageBitmap, final String name, final SaveImageListener listener) {
-        modelFirebase.saveImage(imageBitmap, name,  new SaveImageListener(){
-
+        modelFirebase.saveImage(imageBitmap, name, new SaveImageListener(){
             @Override
             public void complete(String url) {
                 listener.complete(url);
@@ -92,7 +148,6 @@ public class Model {
                 listener.fail();
             }
         });
-
     }
 
     public void getImage(String imageName, final GetImageListener listener) {

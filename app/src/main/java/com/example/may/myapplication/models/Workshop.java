@@ -23,21 +23,24 @@ public class Workshop implements Serializable {
     private String id;
     private String teacherId;
     private String place;
-    private long date;
+    private long startTime;
+    private long endTime;
     private String genre;
     private String level;
     private int maxParticipants;
     public List<String> registeredMembers;
     public List<String> waitingListMembers;
+    private boolean isDeleted;
 
     String teacherName;
     String teacherImageUrl;
 
     private long lastUpdated;
 
-    public Workshop(String id, long date, String teacherId, String place, String genre, String level, int maxParticipants) {
+    public Workshop(String id, long startTime, long endTime, String teacherId, String place, String genre, String level, int maxParticipants) {
         this.id = id;
-        this.date = date;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.teacherId = teacherId;
         this.place = place;
         this.genre = genre;
@@ -72,12 +75,20 @@ public class Workshop implements Serializable {
         this.place = place;
     }
 
-    public long getDate() {
-        return date;
+    public long getStartTime() {
+        return startTime;
     }
 
-    public void setDate(long date) {
-        this.date = date;
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
+    public long getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
     }
 
     public String getGenre() {
@@ -126,6 +137,14 @@ public class Workshop implements Serializable {
 
     public void setWaitingListMembers(List<String> waitingListMembers) {
         this.waitingListMembers = waitingListMembers;
+    }
+
+    public boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     public String getTeacherName() {
