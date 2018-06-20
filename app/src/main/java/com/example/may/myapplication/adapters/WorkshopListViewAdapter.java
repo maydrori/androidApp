@@ -81,9 +81,9 @@ public class WorkshopListViewAdapter extends ArrayAdapter<Workshop> {
 
         teacherPhoto.setTag(workshop.getTeacherId());
 
-        viewModel.getImage(workshop.getTeacherId()).observe(owner, new Observer<Bitmap>() {
+        Model.instance().getImage(workshop.getTeacherImageUrl(), new Model.GetImageListener() {
             @Override
-            public void onChanged(@Nullable Bitmap bitmap) {
+            public void onDone(Bitmap bitmap) {
                 if (teacherPhoto.getTag().equals(workshop.getTeacherId())) {
                     if (bitmap != null) teacherPhoto.setImageBitmap(bitmap);
                 }

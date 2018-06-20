@@ -3,7 +3,6 @@ package com.example.may.myapplication.fragments;
 import android.arch.lifecycle.LifecycleOwner;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -20,13 +19,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.may.myapplication.R;
-import com.example.may.myapplication.activities.ViewWorkshop;
 import com.example.may.myapplication.dal.Model;
-import com.example.may.myapplication.dal.firebase.WorkshopsFirebase;
 import com.example.may.myapplication.models.Workshop;
 import com.example.may.myapplication.repositories.UserRepository;
 import com.example.may.myapplication.utils.DateFormatter;
-import com.example.may.myapplication.utils.NotificationsHelper;
 import com.example.may.myapplication.viewModels.WorkshopViewModel;
 
 /**
@@ -39,7 +35,6 @@ public class ViewWorkshopFragment extends Fragment {
 
     Workshop workshop;
     String workshopId;
-//    String teacherId;
 
     boolean isMyWorkshop;
     ImageView teacherPhoto;
@@ -64,7 +59,6 @@ public class ViewWorkshopFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-
         inflater.inflate(R.menu.view_my_workshop, menu);
         super.onCreateOptionsMenu(menu, inflater);
     }
@@ -82,7 +76,6 @@ public class ViewWorkshopFragment extends Fragment {
                 // If we got here, the user's action was not recognized.
                 // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
-
         }
     }
 
@@ -100,11 +93,11 @@ public class ViewWorkshopFragment extends Fragment {
         workshopId = getArguments().getString("workshopId");
 
         initViewFields();
-        initViewModels(workshopId);
+        initViewModel(workshopId);
         registerEvents();
     }
 
-    private void initViewModels(String workshopId) {
+    private void initViewModel(String workshopId) {
         workshopViewModel = ViewModelProviders.of(this).get(WorkshopViewModel.class);
         workshopViewModel.init(workshopId);
 
@@ -117,18 +110,6 @@ public class ViewWorkshopFragment extends Fragment {
                     isMyWorkshop = workshop.getTeacherId().equals(UserRepository.getCurrentUserId());
                     setHasOptionsMenu(isMyWorkshop);
                     updateUI();
-
-                    teacherPhoto.setImageResource(R.drawable.ic_person);
-                    workshopViewModel.getTeacherImage(w.getTeacherId()).observe(owner, new Observer<Bitmap>() {
-                        @Override
-                        public void onChanged(@Nullable Bitmap bitmap) {
-
-                            if (progressBarFinishLoading.getVisibility() == View.VISIBLE)
-                                progressBarFinishLoading.setVisibility(View.INVISIBLE);
-
-                            if (bitmap != null) teacherPhoto.setImageBitmap(bitmap);
-                        }
-                    });
                 }
             }
         });
@@ -136,8 +117,26 @@ public class ViewWorkshopFragment extends Fragment {
 
     private void updateUI() {
 
-        setFieldsByWorkshop();
+        updateWorkshopInfo();
+        updateRelevantActions();
+    }
 
+    private void initViewFields() {
+        progressBarFinishLoading = getView().findViewById(R.id.progressBarFinishLoading);
+        progressBarFinishLoading.setVisibility(View.VISIBLE);
+
+        teacherPhoto = getView().findViewById(R.id.image_teacher);
+        teacherPhoto.setImageResource(R.drawable.ic_person);
+
+        teacherName = getView().findViewById(R.id.text_teacher);
+        genre = getView().findViewById(R.id.text_genre);
+        place = getView().findViewById(R.id.text_place);
+        level = getView().findViewById(R.id.text_level);
+        date = getView().findViewById(R.id.text_date);
+        time = getView().findViewById(R.id.text_time);
+    }
+
+    private void updateRelevantActions() {
         String membersOverview;
         int btnActionToShow;
         boolean toShowSoldOutButton = false;
@@ -145,8 +144,12 @@ public class ViewWorkshopFragment extends Fragment {
         // Workshop is full
         if (workshop.getRegisteredMembers().size() == workshop.getMaxParticipants()) {
             membersOverview = workshop.getWaitingListMembers().size() + " ממתינים ";
+
+            // User is in waiting list
             if (workshop.getWaitingListMembers().contains(UserRepository.getCurrentUserId())) btnActionToShow = R.id.btn_leave_waitinglist;
+                // User registered to workshop
             else if (workshop.getRegisteredMembers().contains(UserRepository.getCurrentUserId())) btnActionToShow = R.id.btn_unregister;
+                // User not registered to workshop and not in the waiting list
             else btnActionToShow = R.id.btn_waitinglist;
 
             toShowSoldOutButton = true;
@@ -154,9 +157,12 @@ public class ViewWorkshopFragment extends Fragment {
         // Workshop still got place
         else {
             membersOverview = workshop.getRegisteredMembers().size() + "/" + workshop.getMaxParticipants();
+
+            // Check if user already registered to the workshop
             btnActionToShow = (workshop.getRegisteredMembers().contains(UserRepository.getCurrentUserId())) ? R.id.btn_unregister : R.id.btn_register;
         }
 
+        // If the current workshop is mine, show the number of registered members and the delete button
         if (isMyWorkshop) {
             ((TextView)getView().findViewById(R.id.text_members)).setText(membersOverview);
             btnActionToShow = R.id.btn_delete;
@@ -166,20 +172,7 @@ public class ViewWorkshopFragment extends Fragment {
         ((TextView)getView().findViewById(R.id.text_sold_out)).setVisibility((toShowSoldOutButton) ? View.VISIBLE : View.INVISIBLE);
     }
 
-    private void initViewFields() {
-        progressBarFinishLoading = getView().findViewById(R.id.progressBarFinishLoading);
-        progressBarFinishLoading.setVisibility(View.VISIBLE);
-
-        teacherPhoto = getView().findViewById(R.id.image_teacher);
-        teacherName = getView().findViewById(R.id.text_teacher);
-        genre = getView().findViewById(R.id.text_genre);
-        place = getView().findViewById(R.id.text_place);
-        level = getView().findViewById(R.id.text_level);
-        date = getView().findViewById(R.id.text_date);
-        time = getView().findViewById(R.id.text_time);
-    }
-
-    private void setFieldsByWorkshop() {
+    private void updateWorkshopInfo() {
 
         genre.setText(workshop.getGenre());
         place.setText(workshop.getPlace());
@@ -187,6 +180,16 @@ public class ViewWorkshopFragment extends Fragment {
         date.setText(DateFormatter.toDateFormat(workshop.getStartTime()));
         time.setText(DateFormatter.toTimeFormat(workshop.getStartTime()) + " - " + DateFormatter.toTimeFormat(workshop.getEndTime()));
         teacherName.setText(workshop.getTeacherName());
+
+        Model.instance().getImage(workshop.getTeacherImageUrl(), new Model.GetImageListener() {
+            @Override
+            public void onDone(Bitmap bitmap) {
+                if (progressBarFinishLoading.getVisibility() == View.VISIBLE)
+                    progressBarFinishLoading.setVisibility(View.INVISIBLE);
+
+                if (bitmap != null) teacherPhoto.setImageBitmap(bitmap);
+            }
+        });
     }
 
     private void showRelevantActionButton(int btnId) {
@@ -225,16 +228,6 @@ public class ViewWorkshopFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 Model.instance().enterWaitingList(workshopId, userId);
-//                        new WorkshopsFirebase.LeaveWaitingListListener() {
-//                    @Override
-//                    public void onLeave() {
-//
-//                        Intent intent = new Intent(getContext(), ViewWorkshop.class)
-//                                .putExtra("workshopId", workshopId);
-//
-//                        NotificationsHelper.send(getContext(), intent, R.string.notification_userGotPlaceInWorkshop_title, R.string.notification_userGotPlaceInWorkshop_content);
-//                    }
-//                });
             }
         });
 

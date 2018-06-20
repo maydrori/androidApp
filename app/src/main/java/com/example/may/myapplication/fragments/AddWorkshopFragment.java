@@ -52,7 +52,6 @@ public class AddWorkshopFragment extends DialogFragment {
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-
         Dialog dialog = new Dialog(getActivity());
         dialog.setContentView(R.layout.add_workshop);
         return dialog;
@@ -69,36 +68,52 @@ public class AddWorkshopFragment extends DialogFragment {
 
     private void handleSave() {
 
-        Button saveButton = (Button) getDialog().findViewById(R.id.btnSave);
+        final Button saveButton = (Button) getDialog().findViewById(R.id.btnSave);
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                if (validateEmptyFields()) {
+                // If all fields are valid, save the workshop
+                if (validate()) saveWorkshop();
 
-                    // Convert times from text to long
-                    long startTime = DateFormatter.fullStringToDate(dateInput.getText().toString() + " " + startTimeInput.getText().toString()).getTime();
-                    long endTime = DateFormatter.fullStringToDate(dateInput.getText().toString() + " " + endTimeInput.getText().toString()).getTime();
-
-                    // Validate time range
-                    if (validateTimeRange(startTime, endTime)) {
-
-                        String genre = genreInput.getSelectedItem().toString();
-                        String level = levelInput.getSelectedItem().toString();
-                        String place = placeInput.getText().toString();
-                        int maxParticipants = Integer.parseInt(maxParticipantsInput.getText().toString());
-
-                        String workshopId = (workshop != null) ? workshop.getId() : Model.instance().getNextWorkshopId();
-                        Workshop workshopToSave = new Workshop(workshopId, startTime, endTime, UserRepository.getCurrentUserId(), place, genre, level, maxParticipants);
-                        Model.instance().saveWorkshop(workshopToSave);
-
-                        Toast.makeText(getActivity().getApplicationContext(), getResources().getString(R.string.alert_workshopSaved), Toast.LENGTH_SHORT).show();
-
-                        getDialog().dismiss();
-                    }
-                }
             }
         });
+    }
+
+    private void saveWorkshop() {
+        String genre = genreInput.getSelectedItem().toString();
+        String level = levelInput.getSelectedItem().toString();
+        String place = placeInput.getText().toString();
+        int maxParticipants = Integer.parseInt(maxParticipantsInput.getText().toString());
+        long startTime = DateFormatter.fullStringToDate(dateInput.getText().toString() + " " + startTimeInput.getText().toString()).getTime();
+        long endTime = DateFormatter.fullStringToDate(dateInput.getText().toString() + " " + endTimeInput.getText().toString()).getTime();
+
+        // If we update the workshop- get its id,
+        // else- get new id
+        String workshopId = (workshop != null) ? workshop.getId() : Model.instance().getNextWorkshopId();
+
+        Workshop workshopToSave = new Workshop(workshopId,
+                startTime,
+                endTime,
+                UserRepository.getCurrentUserId(),
+                place,
+                genre,
+                level,
+                maxParticipants);
+
+        Model.instance().saveWorkshop(workshopToSave);
+
+        // Alert the user
+        Toast.makeText(getActivity().getApplicationContext(),
+                getResources().getString(R.string.alert_workshopSaved), Toast.LENGTH_SHORT)
+                .show();
+
+        // Close the dialog
+        getDialog().dismiss();
+    }
+
+    private boolean validate() {
+        return validateEmptyFields() && validateTimeRange();
     }
 
     private boolean validateEmptyFields() {
@@ -119,7 +134,11 @@ public class AddWorkshopFragment extends DialogFragment {
         return true;
     }
 
-    private boolean validateTimeRange(long startTime, long endTime) {
+    private boolean validateTimeRange() {
+        // Convert times from text to long
+        long startTime = DateFormatter.fullStringToDate(dateInput.getText().toString() + " " + startTimeInput.getText().toString()).getTime();
+        long endTime = DateFormatter.fullStringToDate(dateInput.getText().toString() + " " + endTimeInput.getText().toString()).getTime();
+
         if (endTime < startTime) {
             endTimeInput.setError(getResources().getString(R.string.form_invalidTimes));
             return false;
@@ -151,7 +170,6 @@ public class AddWorkshopFragment extends DialogFragment {
     }
 
     private void initDialogInputs() {
-
         placeInput = ((EditText)getDialog().findViewById(R.id.place));
         maxParticipantsInput = (EditText)getDialog().findViewById(R.id.maxParticipants);
         dateInput = (EditText)getDialog().findViewById(R.id.date);

@@ -12,7 +12,7 @@ import com.example.may.myapplication.fragments.ViewWorkshopFragment;
  * Created by May on 4/22/2018.
  */
 
-public class ViewWorkshop extends AppCompatActivity {
+public class ViewWorkshopActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -20,9 +20,8 @@ public class ViewWorkshop extends AppCompatActivity {
         setContentView(R.layout.activity_view_workshop);
 
         Fragment fragment = ViewWorkshopFragment.instance(getIntent().getExtras().getString("workshopId"));
-        FragmentManager fragmentManager = getSupportFragmentManager();
 
-        fragmentManager.beginTransaction()
+        getSupportFragmentManager().beginTransaction()
                 .replace(R.id.content_frame, fragment)
                 .commit();
     }

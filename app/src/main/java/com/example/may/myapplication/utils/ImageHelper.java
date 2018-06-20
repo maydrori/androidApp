@@ -3,6 +3,8 @@ package com.example.may.myapplication.utils;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.example.may.myapplication.MyApp;
@@ -14,6 +16,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Date;
 
 /**
@@ -34,39 +38,37 @@ public class ImageHelper {
 
     public static Bitmap readImageFromLocalStorage(String fileName) {
 
+        Bitmap bitmap = null;
         try {
-            File file = new File(MyApp.context.getFilesDir(), fileName);
-
-            FileInputStream input = MyApp.context.openFileInput(fileName);
-
-            byte[] bytes = new byte[(int) file.length()];
-            input.read(bytes);
-
-            return bytesToBitmap(bytes);
-        }
-        catch (FileNotFoundException e) {
+            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            File imageFile = new File(dir, fileName);
+            InputStream inputStream = new FileInputStream(imageFile);
+            bitmap = BitmapFactory.decodeStream(inputStream);
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return null;
+        return bitmap;
     }
 
-    public static void saveImageToLocalStorage(String filename, Bitmap image) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] data = baos.toByteArray();
-
-        FileOutputStream outputStream;
-
+    public static void saveImageToLocalStorage(Bitmap imageBitmap, String imageFileName) {
+        if (imageBitmap == null) return;
         try {
-            outputStream = MyApp.context.openFileOutput(filename, Context.MODE_PRIVATE);
-            outputStream.write(data);
-            outputStream.close();
-        } catch (Exception e) {
+            File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+            if (!dir.exists()) {
+                dir.mkdir();
+            }
+            File imageFile = new File(dir,imageFileName);
+            imageFile.createNewFile();
+
+            OutputStream out = new FileOutputStream(imageFile);
+            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            out.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
             e.printStackTrace();
         }
-
     }
 }

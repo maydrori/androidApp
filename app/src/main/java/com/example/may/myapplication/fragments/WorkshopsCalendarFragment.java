@@ -17,7 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.may.myapplication.R;
-import com.example.may.myapplication.activities.ViewWorkshop;
+import com.example.may.myapplication.activities.ViewWorkshopActivity;
 import com.example.may.myapplication.adapters.WorkshopListViewAdapter;
 import com.example.may.myapplication.dal.room.daos.WorkshopDao;
 import com.example.may.myapplication.models.Workshop;
@@ -167,7 +167,7 @@ public class WorkshopsCalendarFragment extends Fragment {
 
                 Workshop workshop = workshopListAdapterData.get(position);
 
-                Intent intent = new Intent(getContext(), ViewWorkshop.class)
+                Intent intent = new Intent(getContext(), ViewWorkshopActivity.class)
                         .putExtra("workshopId", workshop.getId());
                 startActivity(intent);
             }

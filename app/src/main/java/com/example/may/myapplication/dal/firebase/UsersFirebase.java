@@ -48,21 +48,4 @@ public class UsersFirebase {
             }
         });
     }
-
-    public void getUserById(String id, final ModelFirebase.GetDataListener listener) {
-
-        ref.child(id).addValueEventListener((new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                User user = dataSnapshot.getValue(User.class);
-                listener.onComplete(user);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        }));
-    }
 }

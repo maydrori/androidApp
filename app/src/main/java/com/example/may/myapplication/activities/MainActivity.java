@@ -3,12 +3,12 @@ package com.example.may.myapplication.activities;
 import android.arch.lifecycle.LifecycleOwner;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -17,11 +17,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.may.myapplication.R;
 import com.example.may.myapplication.dal.Model;
-import com.example.may.myapplication.fragments.LoginFragment;
 import com.example.may.myapplication.fragments.UserProfileFragment;
 import com.example.may.myapplication.fragments.WorkshopsCalendarFragment;
 import com.example.may.myapplication.models.User;
@@ -33,16 +31,21 @@ public class MainActivity extends AppCompatActivity  {
 
     private UserViewModel userViewModel;
     DrawerLayout mDrawerLayout;
+    NavigationView navigationView;
+    TextView navUserName;
+    ImageView navUserImage;
 
-    private void initViews() {
+    @Override
+    public void onBackPressed() {
 
-        ActionBar actionbar = getSupportActionBar();
-        actionbar.setDisplayHomeAsUpEnabled(true);
-        actionbar.setHomeAsUpIndicator(R.drawable.ic_menu);
+        Fragment f = getSupportFragmentManager().findFragmentById(R.id.content_main_frame);
+        navigationView.setCheckedItem(R.id.nav_home);
 
-        mDrawerLayout = findViewById(R.id.drawer_layout);
-
-        setUpNavigationView();
+        // Don't go back if the fragment is the calender one
+        // (because we don't want to go back to login screen)
+        if (!(f instanceof WorkshopsCalendarFragment)) {
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -55,25 +58,31 @@ public class MainActivity extends AppCompatActivity  {
         return super.onOptionsItemSelected(item);
     }
 
+    private void setUpApplicationBar() {
+        ActionBar actionbar = getSupportActionBar();
+        actionbar.setDisplayHomeAsUpEnabled(true);
+        actionbar.setHomeAsUpIndicator(R.drawable.ic_menu);
+    }
+
     private void setUpNavigationView() {
 
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        final TextView navUserName = navigationView.getHeaderView(0).findViewById(R.id.text_username);
-        final ImageView navUserImage = navigationView.getHeaderView(0).findViewById(R.id.image_user);
+        mDrawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
+        navUserName = navigationView.getHeaderView(0).findViewById(R.id.text_username);
+        navUserImage = navigationView.getHeaderView(0).findViewById(R.id.image_user);
         navUserImage.setImageResource(R.drawable.ic_person);
 
         navigationView.setNavigationItemSelectedListener(
                 new NavigationView.OnNavigationItemSelectedListener() {
                     @Override
                     public boolean onNavigationItemSelected(MenuItem menuItem) {
-            // set item as selected to persist highlight
-            menuItem.setChecked(true);
-            // close drawer when item is tapped
-            mDrawerLayout.closeDrawers();
 
-            switchTab(menuItem.getItemId());
+                // close drawer when item is tapped
+                mDrawerLayout.closeDrawers();
 
-            return true;
+                switchTab(menuItem.getItemId());
+
+                return true;
              }
         });
 
@@ -85,56 +94,63 @@ public class MainActivity extends AppCompatActivity  {
             @Override
             public void onChanged(@Nullable User user) {
                 if (user != null) {
-                    navUserName.setText(user.getName());
+                    updateNavigationViewUi(user);
                 }
             }
         });
+    }
 
-        userViewModel.getImage(UserRepository.getCurrentUserId()).observe(owner, new Observer<Bitmap>() {
+    private void updateNavigationViewUi(User user) {
+        navUserName.setText(user.getName());
+
+        Model.instance().getImage(user.getImageUrl(), new Model.GetImageListener() {
             @Override
-            public void onChanged(@Nullable Bitmap bitmap) {
+            public void onDone(Bitmap bitmap) {
                 if (bitmap != null) navUserImage.setImageBitmap(bitmap);
             }
         });
-
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-//        Model.instance().syncRemoteData();
-
         setContentView(R.layout.activity_main);
-        initViews();
+        setUpApplicationBar();
+        setUpNavigationView();
 
+        // Default tab- home
         switchTab(R.id.nav_home);
     }
 
     private void switchTab (int menuItemId) {
+
+        // Set item as checked
+        navigationView.setCheckedItem(menuItemId);
+
+        FragmentTransaction f = getSupportFragmentManager().beginTransaction();
         Fragment fragment;
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        boolean addToBackStack = false;
         switch(menuItemId) {
             default:
             case R.id.nav_home:
+                // Show calendar fragment
                 fragment = new WorkshopsCalendarFragment();
+                f.replace(R.id.content_main_frame, fragment).commit();
                 break;
             case R.id.nav_profile:
+                // Show user profile fragment
                 fragment = UserProfileFragment.instance(FirebaseAuth.getInstance().getCurrentUser().getUid());
-                addToBackStack = true;
+                f.replace(R.id.content_main_frame, fragment)
+                        .addToBackStack(null)
+                        .commit();
                 break;
             case R.id.nav_logout:
+                // Sign out and go back to login screen
                 FirebaseAuth.getInstance().signOut();
-                fragment = new LoginFragment();
+                Intent intent = new Intent(this, LoginActivity.class);
+                startActivity(intent);
+
                 break;
         }
-
-        FragmentTransaction f = fragmentManager.beginTransaction()
-                .replace(R.id.content_frame, fragment);
-
-        if (addToBackStack) f.addToBackStack(null);
-
-        f.commit();
     }
 }

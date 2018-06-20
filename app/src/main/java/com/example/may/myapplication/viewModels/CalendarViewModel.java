@@ -30,10 +30,6 @@ public class CalendarViewModel extends ViewModel {
         calendarWorkshops = WorkshopsRepository.instance.getAllWorkshopsForCalendar();
     }
 
-    public LiveData<Bitmap> getImage(String userId) {
-        return UserRepository.instance.getUserImage(userId);
-    }
-
     public LiveData<List<WorkshopDao.WorkshopMini>> getWorkshopsForCalendar() {
         return this.calendarWorkshops;
     }

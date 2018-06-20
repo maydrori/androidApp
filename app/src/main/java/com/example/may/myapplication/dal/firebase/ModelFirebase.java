@@ -3,6 +3,7 @@ package com.example.may.myapplication.dal.firebase;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -25,6 +26,8 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -39,7 +42,7 @@ public class ModelFirebase {
 
     public WorkshopsFirebase workshops;
     public UsersFirebase users;
-    StorageReference imagesStorage;
+
     final String USERS_LAST_UPDATE_DATE = "usersLastUpdateDate";
     final String WORKSHOPS_LAST_UPDATE_DATE = "workshopsLastUpdateDate";
 
@@ -47,57 +50,55 @@ public class ModelFirebase {
         FirebaseDatabase fbInstance = FirebaseDatabase.getInstance();
         workshops = new WorkshopsFirebase(fbInstance.getReference("workshops"));
         users = new UsersFirebase(fbInstance.getReference("users"));
-
-        imagesStorage = FirebaseStorage.getInstance().getReference().child("images"); ;
     }
 
     /**
-     * Upload the image to the firebase storage
+     * Upload image to firebase stoarge
      * @param imageBitmap
-     * @param name
      * @param listener
      */
-    public void saveImage(final Bitmap imageBitmap, final String name, final Model.SaveImageListener listener) {
+    public void saveImage(Bitmap imageBitmap, final Model.SaveImageListener listener) {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
 
-        byte[] data = ImageHelper.bitmapToBytes(imageBitmap);
+        String name = ""+ (new Date()).getTime();
+        StorageReference imagesRef = storage.getReference().child("images").child(name);
 
-        UploadTask uploadTask = imagesStorage.child(name).putBytes(data);
+        UploadTask uploadTask = imagesRef.putBytes(ImageHelper.bitmapToBytes(imageBitmap));
         uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                @SuppressWarnings("VisibleForTests") Uri downloadUrl = taskSnapshot.getDownloadUrl();
                 listener.complete(downloadUrl.toString());
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
-            public void onFailure(@NonNull Exception e) {
-                listener.fail();
+            public void onFailure(Exception exception) {
+                listener.complete(null);
             }
         });
     }
 
-    public void getImage(final String name, final Model.GetImageListener listener) {
+    /**
+     * Get image from firebase storage via the image url
+     * @param url
+     * @param listener
+     */
+    public void getImage(String url, final Model.GetImageListener listener){
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        StorageReference httpsReference = storage.getReferenceFromUrl(url);
 
-        final long ONE_MEGABYTE = 1024 * 1024 * 5;
-        imagesStorage.child(name).getBytes(ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+        final long ONE_MEGABYTE = 1024 * 1024;
+        httpsReference.getBytes(5 * ONE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
             @Override
-            public void onSuccess(final byte[] bytes) {
-
-                imagesStorage.child(name).getMetadata().addOnCompleteListener(new OnCompleteListener<StorageMetadata>() {
-
-                    @Override
-                    public void onComplete(@NonNull Task<StorageMetadata> task) {
-                        long lastUpdated = task.getResult().getUpdatedTimeMillis();
-
-                        listener.onSuccess(ImageHelper.bytesToBitmap(bytes), lastUpdated);
-                    }
-                });
+            public void onSuccess(byte[] bytes) {
+                Bitmap image = ImageHelper.bytesToBitmap(bytes);
+                listener.onDone(image);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
-            public void onFailure(@NonNull Exception exception) {
-                // Handle any errors
-                listener.onFail();
+            public void onFailure(Exception exception) {
+                exception.printStackTrace();
+                listener.onDone(null);
             }
         });
     }
@@ -172,7 +173,6 @@ public class ModelFirebase {
 
     private void updateLastUpdateDate(String field, long date) {
         SharedPreferences.Editor editor = MyApp.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
-//        editor.putLong(field, new Date().getTime());
         editor.putLong(field, date);
         editor.commit();
     }

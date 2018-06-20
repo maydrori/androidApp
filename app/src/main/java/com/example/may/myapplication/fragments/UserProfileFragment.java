@@ -47,6 +47,7 @@ public class UserProfileFragment extends Fragment {
     EditText facebookLinkInput;
     ImageView userPhoto;
     ProgressBar progressBarSaveProfile;
+    ProgressBar progressBarLoadProfile;
     Button btnEditImage;
     Button btnSaveProfile;
 
@@ -65,15 +66,11 @@ public class UserProfileFragment extends Fragment {
         userViewModel.getUser().observe(owner, new Observer<User>() {
             @Override
             public void onChanged(@Nullable User user) {
-                updateUI(user);
-            }
-        });
+                progressBarLoadProfile.setVisibility(View.INVISIBLE);
 
-        // Observe the user image in order to update the image input
-        userViewModel.getImage(userId).observe(owner, new Observer<Bitmap>() {
-            @Override
-            public void onChanged(@Nullable Bitmap bitmap) {
-                if (bitmap != null) userPhoto.setImageBitmap(bitmap);
+                if (user != null) {
+                    updateUI(user);
+                }
             }
         });
     }
@@ -83,6 +80,13 @@ public class UserProfileFragment extends Fragment {
         phoneInput.setText(user.getPhone());
         instegramLinkInput.setText(user.getInstegramLink());
         facebookLinkInput.setText(user.getFacebookLink());
+
+        Model.instance().getImage(user.getImageUrl(), new Model.GetImageListener() {
+            @Override
+            public void onDone(Bitmap bitmap) {
+                if (bitmap != null) userPhoto.setImageBitmap(bitmap);
+            }
+        });
     }
 
     public static UserProfileFragment instance(String userId) {
@@ -104,7 +108,6 @@ public class UserProfileFragment extends Fragment {
                 try {
                     Uri imageUri = data.getData();
                     userBitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), imageUri);
-
                     userPhoto.setImageBitmap(userBitmap);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -124,10 +127,11 @@ public class UserProfileFragment extends Fragment {
 
         // Save the user
         Model.instance().saveUser(user);
+        progressBarSaveProfile.setVisibility(View.INVISIBLE);
 
         // Alert success
-        Toast.makeText(getActivity().getApplicationContext(), "העדכון בוצע בהצלחה", Toast.LENGTH_SHORT).show();
-        progressBarSaveProfile.setVisibility(View.INVISIBLE);
+        String msg =  getContext().getResources().getString(R.string.alert_finishUpdate);
+        Toast.makeText(getActivity().getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
 
         // Go back
         getActivity().getSupportFragmentManager().popBackStack();
@@ -162,6 +166,9 @@ public class UserProfileFragment extends Fragment {
         progressBarSaveProfile = getView().findViewById(R.id.progressBarSaveProfile);
         progressBarSaveProfile.setVisibility(View.INVISIBLE);
 
+        progressBarLoadProfile = getView().findViewById(R.id.progressBarLoadProfile);
+        progressBarLoadProfile.setVisibility(View.VISIBLE);
+
         if (readOnly) setViewAsReadOnly(nameInput, phoneInput, instegramLinkInput, facebookLinkInput);
     }
 
@@ -193,8 +200,10 @@ public class UserProfileFragment extends Fragment {
                     instegramLinkInput.getText().toString(),
                     facebookLinkInput.getText().toString());
 
+            // If the user has image, save it and save the user with its url,
+            // else save the user without url
             if (userBitmap != null) {
-                Model.instance().saveImage(userBitmap, "image-" + userId, new Model.SaveImageListener() {
+                Model.instance().saveImage(userBitmap, new Model.SaveImageListener() {
                     @Override
                     public void complete(String url) {
                         updatedUser.setImageUrl(url);
@@ -216,7 +225,6 @@ public class UserProfileFragment extends Fragment {
         btnEditImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setType("image/*");
                 startActivityForResult(intent, PICK_IMAGE);

@@ -42,24 +42,6 @@ public class WorkshopsFirebase {
         updateLastUpdateDate(workshopId);
     }
 
-    public void getWorkshopById(String workshopId, final ModelFirebase.GetDataListener listener) {
-
-        // Getting updates
-        ref.child(workshopId).addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-
-                Workshop workshop = dataSnapshot.getValue(Workshop.class);
-                listener.onComplete(workshop);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
-    }
-
     public void getAllWorkshops(long lastUpdateDate, final ModelFirebase.GetDataListener listener) {
 
         // Getting updates

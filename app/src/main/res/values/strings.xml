@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Come to dance</string>
+    <string name="app_name">Dance it</string>
     <string name="add_workshop">צור סדנא</string>
     <string name="dateInput">תאריך</string>
     <string name="hourInput">שעה</string>
@@ -28,6 +28,7 @@
     <string name="leaveWaitingList">צא מרשימת ההמתנה</string>
     <string name="participantsList">רשימת משתתפים</string>
     <string name="alert_workshopSaved">הסדנא נשמרה בהצלחה</string>
+    <string name="alert_finishUpdate">העדכון בוצע בהצלחה</string>
     <string name="notification_userGotPlaceInWorkshop_title">איזה כיף לך!</string>
     <string name="notification_userGotPlaceInWorkshop_content">התפנה לך מקום בסדנא:)</string>
     <string name="authFailed">ההתחברות נכשלה</string>

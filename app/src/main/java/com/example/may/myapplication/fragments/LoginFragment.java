@@ -49,9 +49,9 @@ public class LoginFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         mAuth = FirebaseAuth.getInstance();
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        if (currentUser != null) goToMainActivity();
+        // Go straight to main activity if the user already logged in
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) goToMainActivity();
         else handleLoginButton();
     }
 
@@ -66,11 +66,15 @@ public class LoginFragment extends Fragment {
                 @Override
                 public void onComplete(@NonNull Task<AuthResult> task) {
                     if (task.isSuccessful()) {
-                        final FirebaseUser user = mAuth.getCurrentUser();
-                        Model.instance().saveUser(new User(user.getUid()));
-                        initProfileFragment(user.getUid());
+                        String userUid = mAuth.getCurrentUser().getUid();
+
+                        // Save the user in the db
+                        Model.instance().saveUser(new User(userUid));
+
+                        // Go to profile screen in order to edit his details
+                        initProfileFragment(userUid);
                     } else {
-                        Toast.makeText(getActivity(), "Authentication failed.", Toast.LENGTH_SHORT).show();
+                        authFailed();
                     }
                 }
             });
@@ -112,14 +116,17 @@ public class LoginFragment extends Fragment {
             final String userEmail = userIdInput.getText().toString().trim();
             final String userPassword = passwordInput.getText().toString().trim();
 
+            // If one of the fields empty, alert fail
             if (userEmail.isEmpty() || userPassword.isEmpty()) authFailed();
             else {
-                // If the user doesn't exist, the result will be empty array
+                // Check if the user already in the system.
+                // If the user doesn't exist, the result will be empty array and we will create a new one
                 mAuth.fetchSignInMethodsForEmail(userEmail).addOnCompleteListener(new OnCompleteListener<SignInMethodQueryResult>() {
                     @Override
                     public void onComplete(@NonNull Task<SignInMethodQueryResult> task) {
-                        if (task.getResult().getSignInMethods().isEmpty())
+                        if (task.getResult().getSignInMethods().isEmpty()) {
                             createNewUser(userEmail, userPassword);
+                        }
                         else signIn(userEmail, userPassword);
                     }
                 });
@@ -129,10 +136,11 @@ public class LoginFragment extends Fragment {
     }
 
     private void initProfileFragment(String newUserId) {
-        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-
         UserProfileFragment fragment = UserProfileFragment.instance(newUserId);
-        fragmentTransaction.replace(R.id.content, fragment).addToBackStack(null);
-        fragmentTransaction.commit();
+
+        getActivity().getSupportFragmentManager().beginTransaction()
+                .replace(R.id.content, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 }

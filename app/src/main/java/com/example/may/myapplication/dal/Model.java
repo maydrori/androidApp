@@ -1,11 +1,14 @@
 package com.example.may.myapplication.dal;
 
 import android.graphics.Bitmap;
+import android.util.Log;
+import android.webkit.URLUtil;
 
 import com.example.may.myapplication.dal.firebase.ModelFirebase;
 import com.example.may.myapplication.dal.firebase.WorkshopsFirebase;
 import com.example.may.myapplication.models.User;
 import com.example.may.myapplication.models.Workshop;
+import com.example.may.myapplication.utils.ImageHelper;
 
 import java.util.Date;
 
@@ -26,61 +29,6 @@ public class Model {
         syncRemoteData();
     }
 
-//    class WorkshopListData extends MutableLiveData<List<Workshop>> {
-//
-//        @Override
-//        protected void onActive() {
-//            super.onActive();
-//            // new thread tsks
-//            // 1. get the students list from the local DB
-//            WorkshopAsyncDao.getAll(new WorkshopAsyncDao.WorkshopAsynchDaoListener<List<Workshop>>() {
-//                @Override
-//                public void onComplete(List<Workshop> data) {
-//                    // 2. update the live data with the new student list
-//                    setValue(data);
-//                    Log.d("TAG","got students from local DB " + data.size());
-//
-//                    // 3. get the student list from firebase
-//                    modelFirebase.workshops.getAllWorkshops(new ModelFirebase.GetDataListener<List<Workshop>>() {
-//                        @Override
-//                        public void onComplete(List<Workshop> workshoplist) {
-//                            // 4. update the live data with the new student list
-//                            setValue(workshoplist);
-////                            Log.d("TAG","got students from firebase " + workshoplist.size());
-//
-//                            // 5. update the local DB
-//                            WorkshopAsyncDao.insertAll(workshoplist, new WorkshopAsyncDao.WorkshopAsynchDaoListener<Boolean>() {
-//                                @Override
-//                                public void onComplete(Boolean data) {
-//
-//                                }
-//                            });
-//                        }
-//                    });
-//                }
-//            });
-//        }
-//
-//        @Override
-//        protected void onInactive() {
-//            super.onInactive();
-//            modelFirebase.workshops.cancellGetAllStudents();
-//            Log.d("TAG","cancellGetAllStudents");
-//        }
-//
-//        public WorkshopListData() {
-//            super();
-//            //setValue(AppLocalDb.db.studentDao().getAll());
-//            setValue(new LinkedList<Workshop>());
-//        }
-//    }
-//
-//    WorkshopListData workshopListData = new WorkshopListData();
-
-//    public LiveData<List<Workshop>> getAllWorkshops(){
-//        return workshopListData;
-//    }
-
     public String getNextWorkshopId() {
         return modelFirebase.workshops.getNextWorkshopId();
     }
@@ -88,14 +36,6 @@ public class Model {
     public void saveWorkshop(Workshop w) {
         modelFirebase.workshops.saveWorkshop(w);
     }
-
-    public void getWorkshopById(String workshopId, ModelFirebase.GetDataListener listener) {
-        modelFirebase.workshops.getWorkshopById(workshopId, listener);
-    }
-
-//    public void getAllWorkshops(ModelFirebase.GetDataListener listener) {
-//        modelFirebase.workshops.getAllWorkshops(listener);
-//    }
 
     public void registerMemberToWorkshop(String workshopId, String userId) {
         modelFirebase.workshops.registerMemberToWorkshop(workshopId, userId);
@@ -113,10 +53,6 @@ public class Model {
         modelFirebase.workshops.enterWaitingList(workshopId, userId);
     }
 
-    public void getUserById(String id, ModelFirebase.GetDataListener listener) {
-        modelFirebase.users.getUserById(id, listener);
-    }
-
     public void saveUser(User u) {
         u.setLastUpdated(new Date().getTime());
         modelFirebase.users.saveUser(u);
@@ -132,12 +68,16 @@ public class Model {
     }
 
     public interface GetImageListener {
-        void onSuccess(Bitmap bitmap, long lastUpdated);
-        void onFail();
+        void onDone(Bitmap bitmap);
     }
 
-    public void saveImage(final Bitmap imageBitmap, final String name, final SaveImageListener listener) {
-        modelFirebase.saveImage(imageBitmap, name, new SaveImageListener(){
+    /**
+     * Save image in firebase
+     * @param imageBitmap
+     * @param listener
+     */
+    public void saveImage(final Bitmap imageBitmap, final SaveImageListener listener) {
+        modelFirebase.saveImage(imageBitmap, new SaveImageListener(){
             @Override
             public void complete(String url) {
                 listener.complete(url);
@@ -150,19 +90,41 @@ public class Model {
         });
     }
 
-    public void getImage(String imageName, final GetImageListener listener) {
+    /**
+     * Get user image by url. First try to get it from the local device storage.
+     * If the image doesn't exist, get it from the firebase storage and save it locally.
+     * @param url
+     * @param listener
+     */
+    public void getImage(final String url, final GetImageListener listener){
 
-        modelFirebase.getImage(imageName, new GetImageListener() {
-            @Override
-            public void onSuccess(Bitmap bitmap, long lastUpdated) {
-                listener.onSuccess(bitmap, lastUpdated);
-            }
+        // If no url- return.
+        if (url == null) listener.onDone(null);
+        else {
+            // Try to get the image from the local device storage
+            String localFileName = URLUtil.guessFileName(url, null, null);
+            final Bitmap image = ImageHelper.readImageFromLocalStorage(localFileName);
 
-            @Override
-            public void onFail() {
-                listener.onFail();
+            if (image != null) listener.onDone(image);
+            // Image not found, get it from firebase
+            else {
+                modelFirebase.getImage(url, new GetImageListener() {
+                    @Override
+                    public void onDone(Bitmap imageBitmap) {
+                        if (imageBitmap == null) {
+                            listener.onDone(null);
+                        } else {
+                            // Save the image locally
+                            String localFileName = URLUtil.guessFileName(url, null, null);
+                            ImageHelper.saveImageToLocalStorage(imageBitmap, localFileName);
+
+                            // Return the image using the listener
+                            listener.onDone(imageBitmap);
+                        }
+                    }
+                });
             }
-        });
+        }
     }
 
     public void syncRemoteData() {
